@@ -1,33 +1,7 @@
 #Requires -Version 5.1
-<#
-.SYNOPSIS
-    Käynnistää AgentDirin automaattisesti: venv, tarvittaessa asennus, verify_setup,
-    Ollama-tarkistus, watcher + server (Web-UI) omissa ikkunoissaan.
+# AgentDir: asennus (tarvittaessa), verify_setup, watcher + server omissa ikkunoissa.
+# Käyttö: .\start-all.ps1  [-SkipVerify] [-SkipOllamaCheck] [-WatcherOnly] [-ServerOnly] [-Force]
 
-.DESCRIPTION
-    Aja agentdir-kansiosta: .\start-all.ps1
-    Sulje watcher- ja server-konsolit lopettaaksesi.
-
-.PARAMETER SkipVerify
-    Ohita verify_setup.py
-
-.PARAMETER SkipOllamaCheck
-    Älä tarkista Ollamaa (localhost:11434)
-
-.PARAMETER WatcherOnly
-    Vain watcher.py
-
-.PARAMETER ServerOnly
-    Vain server.py (ei Inbox-käsittelyä ilman watcheria)
-
-.PARAMETER Force
-    Jos verify_setup epäonnistuu, jatka silti (ei Read-Host -kyselyä)
-
-.EXAMPLE
-    .\start-all.ps1
-.EXAMPLE
-    .\start-all.ps1 -SkipVerify -Force
-#>
 [CmdletBinding()]
 param(
     [switch] $SkipVerify,
@@ -74,7 +48,7 @@ if (-not $SkipVerify) {
             Write-Host "verify_setup epäonnistui; jatketaan (-Force)." -ForegroundColor Yellow
         }
         else {
-            Write-Host "verify_setup epäonnistui. Korjaa virheet tai aja: .\start-all.ps1 -SkipVerify tai -Force" -ForegroundColor Red
+            Write-Host "verify_setup epäonnistui. Käytä -SkipVerify tai -Force" -ForegroundColor Red
             exit 1
         }
     }
