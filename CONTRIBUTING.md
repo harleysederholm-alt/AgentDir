@@ -24,6 +24,12 @@ From the repository root (this directory, where `watcher.py` lives):
 pytest tests/ -v
 ```
 
+Quick local check (Ollama models + LLM/embedding reachability):
+
+```bash
+python verify_setup.py
+```
+
 All tests should pass before you open a pull request.
 
 ## Pull requests

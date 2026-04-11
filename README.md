@@ -60,6 +60,8 @@ echo "Analysoi seuraava data ja tee yhteenveto: tekoäly kasvaa 40% vuodessa." >
 
 Jos `.venv`-kansiota ei ole, aja ensin `.\install.ps1` (Windows) tai `./install.sh` (Linux/macOS).
 
+0. (Valinnainen) Tarkista mallit ja API: `python verify_setup.py`
+
 1. Varmista että **Ollama** pyörii (`ollama serve` tai Ollama-sovellus taustalla).
 2. Projektikansiossa: aktivoi virtuaaliympäristö ja käynnistä watcher.
 
@@ -78,6 +80,7 @@ python watcher.py
 ```
 agentdir/
 ├── watcher.py           ← Pääohjelma (käynnistä tämä)
+├── verify_setup.py      ← Paikallinen tarkistus (Ollama + API)
 ├── server.py            ← A2A REST API + mDNS (valinnainen)
 ├── rag_memory.py        ← Semanttinen muisti (ChromaDB)
 ├── llm_client.py        ← LLM-asiakasohjelma + fallback
