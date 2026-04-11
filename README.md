@@ -12,6 +12,8 @@ Pudota tiedosto `Inbox/`-kansioon → agentti herää, lukee sen, käyttää sem
 
 **Git-repon juuri:** tämä hakemisto (`watcher.py` juuressa) on tarkoitettu GitHub-repositorion juureksi. Kun luot repon, korvaa alla olevissa URL- ja badge-linkeissä `YOUR_GITHUB_USER` omalla käyttäjälläsi tai organisaatiollasi.
 
+**Paikallinen Git:** tässä kansiossa voi olla jo `git init` ja ensimmäinen commit (ilman `remote` / pushia). Kun haluat GitHubiin: luo tyhjä repo palvelussa, `git remote add origin …`, `git push -u origin main`.
+
 ---
 
 ## ✨ Mitä tämä tekee oikeasti
