@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 # AgentDir: asennus (tarvittaessa), verify_setup, watcher + server omissa ikkunoissa.
-# Käyttö: .\start-all.ps1  [-SkipVerify] [-SkipOllamaCheck] [-WatcherOnly] [-ServerOnly] [-Force]
+# Käyttö: .\start-all.ps1  [-SkipVerify] [-SkipOllamaCheck] [-WatcherOnly] [-ServerOnly] [-Force] [-NoBrowser]
 
 [CmdletBinding()]
 param(
@@ -8,7 +8,8 @@ param(
     [switch] $SkipOllamaCheck,
     [switch] $WatcherOnly,
     [switch] $ServerOnly,
-    [switch] $Force
+    [switch] $Force,
+    [switch] $NoBrowser
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,5 +76,10 @@ Write-Host "Valmis." -ForegroundColor Green
 if (-not $WatcherOnly) {
     Write-Host "  Web-UI:  http://127.0.0.1:8080/ui/" -ForegroundColor Cyan
     Write-Host "  OpenAPI: http://127.0.0.1:8080/docs" -ForegroundColor Cyan
+    if (-not $NoBrowser) {
+        Start-Sleep -Seconds 3
+        Start-Process "http://127.0.0.1:8080/ui/"
+        Write-Host "Selain avattu (käytä -NoBrowser estääksesi)." -ForegroundColor Gray
+    }
 }
 Write-Host "Sulje avautuneet konsoli-ikkunat lopettaaksesi palvelut." -ForegroundColor Gray

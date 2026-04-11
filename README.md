@@ -75,7 +75,7 @@ python watcher.py
 
 **Pikakäynnistys:** `.\run.ps1` (Windows) tai `./run.sh` (Linux/macOS; ensin kerran `chmod +x run.sh`). Skripti käyttää `.venv`-Pythonia suoraan.
 
-**Windows – kaikki kerralla:** `Set-ExecutionPolicy -Scope Process Bypass; .\start-all.ps1` käynnistää tarvittaessa asennuksen, `verify_setup.py`:n, watcherin ja serverin (kaksi konsoli-ikkunaa + Web-UI). Parametrit: `-SkipVerify`, `-SkipOllamaCheck`, `-WatcherOnly`, `-ServerOnly`, `-Force`.
+**Windows – kaikki kerralla:** `Set-ExecutionPolicy -Scope Process Bypass; .\start-all.ps1` käynnistää tarvittaessa asennuksen, `verify_setup.py`:n, watcherin ja serverin (kaksi konsoli-ikkunaa), avaa selaimen Web-UI:hin (ohita: `-NoBrowser`). Parametrit: `-SkipVerify`, `-SkipOllamaCheck`, `-WatcherOnly`, `-ServerOnly`, `-Force`, `-NoBrowser`.
 
 ---
 
@@ -220,6 +220,22 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 - **Sandbox-turvallisuus**: Subprocess-eristys riittää useimpiin käyttöihin, mutta ei ole täysin tiivis. Tuotantokäytössä käytä Docker-konttia.
 - **Evoluutio**: Vaatii vähintään 10 tehtävää ennen kuin se alkaa toimia
 - **mDNS**: Ei toimi kaikkien VPN:ien tai Docker-verkkojen kanssa – käytä silloin suoria IP-osoitteita
+
+---
+
+## Projektin laajuus (yhteenveto)
+
+| Osio | Tila |
+|------|------|
+| Watcher, Inbox/Outbox, tiedostoparseri | Valmis |
+| LLM (Ollama), RAG (ChromaDB), sandbox | Valmis |
+| Swarm-lapset `swarm/`-kansiossa | Valmis (lapselle kopioidaan `swarm_manager.py` + `manifest.json`) |
+| A2A REST (`server.py`), mDNS | Valmis |
+| Web-UI `/ui/`, OpenAPI `/docs` | Valmis |
+| Docker / Compose, GitHub Actions CI | Valmis |
+| `verify_setup.py`, `start-all.ps1`, `install.ps1/.sh` | Valmis |
+| OCR skannatuille PDF:ille | Ei (roadmap) |
+| `server.py` lukee `config.json` vain käynnistyksessä | Rajoitus (uudelleenkäynnistys muutoksiin) |
 
 ---
 

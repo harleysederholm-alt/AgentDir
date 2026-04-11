@@ -479,7 +479,7 @@ class TestSwarmManager:
         # Kopioi watcher.py ym. jotta swarm voi kopioida ne
         for fname in ["watcher.py", "rag_memory.py", "sandbox_executor.py",
                       "file_parser.py", "llm_client.py", "evolution_engine.py",
-                      "config_manager.py"]:
+                      "config_manager.py", "swarm_manager.py"]:
             src = Path(__file__).parent.parent / fname
             if src.exists():
                 (tmp_agent_dir / fname).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
@@ -519,6 +519,13 @@ class TestSwarmManager:
         # Kolmas ei saa luoda – max 2
         created = [c for c in [c1, c2, c3] if c is not None]
         assert len(created) == 2
+
+    def test_spawn_includes_swarm_manager_for_child_watcher(self, swarm, tmp_agent_dir):
+        """Lapsen watcher.py importtaa swarm_managerin – tiedosto pitää kopioida."""
+        child = swarm.spawn_child("T", "R", "f.txt")
+        assert child is not None
+        assert (child / "swarm_manager.py").exists()
+        assert (child / "swarm_manager.py").stat().st_size > 100
 
     def test_should_swarm_detects_keyword(self, tmp_agent_dir):
         from swarm_manager import should_swarm

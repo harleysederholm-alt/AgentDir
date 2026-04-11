@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+*.md
+!README.md
+Inbox/*
+Outbox/*
+memory/chroma
+swarm
+.env
+.idea
+.vscode

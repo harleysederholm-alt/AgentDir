@@ -79,6 +79,7 @@ class SwarmManager:
             "file_parser.py",
             "llm_client.py",
             "evolution_engine.py",
+            "swarm_manager.py",
         ]
         for fname in src_files:
             src = self.root_dir / fname
@@ -87,6 +88,13 @@ class SwarmManager:
                     src.read_text(encoding="utf-8"),
                     encoding="utf-8",
                 )
+
+        manifest = self.root_dir / "manifest.json"
+        if manifest.exists():
+            (child_dir / "manifest.json").write_text(
+                manifest.read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
 
         # Kirjoita tehtävä lapsen Inboxiin
         task_file = child_dir / "Inbox" / f"task_from_{parent_file}.md"
