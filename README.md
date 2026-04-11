@@ -54,7 +54,22 @@ echo "Analysoi seuraava data ja tee yhteenveto: tekoäly kasvaa 40% vuodessa." >
 ### Vaatimukset
 - Python 3.10+
 - [Ollama](https://ollama.com) (tai muu OpenAI-yhteensopiva lokaali serveri)
-- Mallit: `ollama pull llama3.2:3b && ollama pull mxbai-embed-large`
+- Mallit (oletus `config.json`): päämalli **`gemma4:e4b`**, embedding **`mxbai-embed-large`**, fallback-embedding **`nomic-embed-text`**. Asenna: `ollama pull gemma4:e4b && ollama pull mxbai-embed-large && ollama pull nomic-embed-text`
+
+### Kun ympäristö on jo asennettu
+
+Jos `.venv`-kansiota ei ole, aja ensin `.\install.ps1` (Windows) tai `./install.sh` (Linux/macOS).
+
+1. Varmista että **Ollama** pyörii (`ollama serve` tai Ollama-sovellus taustalla).
+2. Projektikansiossa: aktivoi virtuaaliympäristö ja käynnistä watcher.
+
+```powershell
+cd agentdir
+.\.venv\Scripts\Activate.ps1
+python watcher.py
+```
+
+(Linux/macOS: `source .venv/bin/activate` ennen `python watcher.py`.)
 
 ---
 

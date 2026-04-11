@@ -7,18 +7,18 @@
   "llm": {
     "provider": "ollama",
     "endpoint": "http://localhost:11434/v1/chat/completions",
-    "model": "llama3.2:3b",
+    "model": "gemma4:e4b",
     "temperature": 0.7,
     "max_tokens": 4096,
     "timeout": 180,
-    "fallback_models": ["phi3:mini", "mistral:7b"]
+    "fallback_models": ["llama3.2:3b", "llama3.2:latest"]
   },
 
   "embedding": {
     "provider": "ollama",
     "endpoint": "http://localhost:11434/api/embed",
     "model": "mxbai-embed-large",
-    "fallback": "nomic-embed-text"
+    "fallback": "nomic-embed-text:latest"
   },
 
   "prompt_templates": {
