@@ -30,6 +30,8 @@ Quick local check (Ollama models + LLM/embedding reachability):
 python verify_setup.py
 ```
 
+Start the watcher without manually activating the venv: `.\run.ps1` (Windows) or `./run.sh` (Unix).
+
 All tests should pass before you open a pull request.
 
 ## Pull requests

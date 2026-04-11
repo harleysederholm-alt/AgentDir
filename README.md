@@ -73,6 +73,8 @@ python watcher.py
 
 (Linux/macOS: `source .venv/bin/activate` ennen `python watcher.py`.)
 
+**Pikakäynnistys:** `.\run.ps1` (Windows) tai `./run.sh` (Linux/macOS; ensin kerran `chmod +x run.sh`). Skripti käyttää `.venv`-Pythonia suoraan.
+
 ---
 
 ## 📁 Kansiorakenne
@@ -94,6 +96,8 @@ agentdir/
 ├── requirements-dev.txt
 ├── install.sh
 ├── install.ps1
+├── run.sh
+├── run.ps1
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-stack.yml
@@ -105,7 +109,7 @@ agentdir/
 ├── Outbox/              ← Valmiit tulokset ilmestyvät tähän
 ├── memory/              ← RAG-vektori-DB (ei koske käsin)
 ├── swarm/               ← Lapsi-agentit (luodaan automaattisesti)
-├── plugins/             ← Omat laajennukset
+├── plugins/             ← Omat laajennukset (.gitkeep)
 └── templates/           ← Valmiit roolikonfiguraatiot
     ├── researcher.json
     └── coder.json
