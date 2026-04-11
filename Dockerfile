@@ -22,8 +22,9 @@ WORKDIR /app
 # Kopioi asennetut paketit builderista
 COPY --from=builder /install /usr/local
 
-# Kopioi lähdekoodi
+# Kopioi lähdekoodi + web-UI
 COPY *.py ./
+COPY web ./web
 COPY config.json manifest.json ./
 
 # Luo tarvittavat kansiot

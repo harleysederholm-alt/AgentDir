@@ -215,9 +215,19 @@ async def discover():
         return {"agents": [], "error": str(e)}
 
 
+# ── Web-UI (dashboard: Inbox / Outbox) ────────────────────────────────────────
+try:
+    from ui_routes import register_ui
+
+    register_ui(app)
+except Exception as e:
+    logger.warning("Web-UI ei käynnistynyt: %s", e)
+
+
 # ── Käynnistys ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     threading.Thread(target=_register_mdns, daemon=True).start()
     print(f"🌐 A2A-serveri käynnissä → http://0.0.0.0:{PORT}")
+    print(f"   Web-UI → http://127.0.0.1:{PORT}/ui/  (OpenAPI: /docs)")
     uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="warning")

@@ -51,9 +51,11 @@ See [README.md](README.md) for architecture, configuration, and Docker usage.
 
 ## Roadmap (Phase 2)
 
-Planned follow-up work (not required for Phase 1 contributions):
+Shipped baseline: **Web-UI** at `/ui/` (Inbox/Outbox lists, file view, links to OpenAPI) when `server.py` is running; optional `AGENTDIR_UI_SECRET` + `X-AgentDir-Key` header.
 
-- Lightweight web UI for Inbox/Outbox status and task flow.
+Follow-up ideas:
+
+- Create tasks / upload files from the browser, HTMX live refresh.
 - Stricter authentication and CORS for deployments exposed to the internet (see README “Production / internet”).
 
-If you want to work on Phase 2, open an issue first so we can agree on the approach (e.g. HTMX vs separate frontend).
+Open an issue before large UI changes so we can align on scope.

@@ -13,5 +13,6 @@ We aim to acknowledge reports within a few business days.
 
 - AgentDir runs arbitrary **LLM-generated Python** in a subprocess with AST-based checks. This reduces risk for casual use but is **not a full sandbox** comparable to containers or kernel-level isolation. For untrusted inputs or production, run inside **Docker** (or a similar isolated environment) as described in the README.
 - The default A2A server uses permissive CORS (`*`) and is intended for **local or trusted networks**. Do not expose it to the public internet without TLS, authentication, and a reverse proxy.
+- The bundled **Web-UI** (`/ui/`) lists and displays files under `Inbox/` and `Outbox/` only. Optionally set `AGENTDIR_UI_SECRET` and send `X-AgentDir-Key` so casual browsers cannot open the dashboard on a shared LAN without the secret.
 
 Thank you for helping keep users safe.

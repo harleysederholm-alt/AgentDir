@@ -4,7 +4,7 @@
 set -e
 
 # Kopioi Python-skriptit jos puuttuvat
-for f in watcher.py server.py config_manager.py rag_memory.py sandbox_executor.py \
+for f in watcher.py server.py ui_routes.py config_manager.py rag_memory.py sandbox_executor.py \
           file_parser.py llm_client.py swarm_manager.py evolution_engine.py; do
     if [ ! -f "/agentdir/$f" ]; then
         cp "/app/$f" "/agentdir/$f"
@@ -21,6 +21,9 @@ if [ ! -f "/agentdir/config.json" ]; then
 fi
 if [ ! -f "/agentdir/manifest.json" ] && [ -f "/app/manifest.json" ]; then
     cp /app/manifest.json /agentdir/manifest.json
+fi
+if [ ! -d "/agentdir/web" ] && [ -d "/app/web" ]; then
+    cp -r /app/web /agentdir/web
 fi
 
 cd /agentdir

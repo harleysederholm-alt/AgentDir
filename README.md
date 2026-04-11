@@ -83,7 +83,9 @@ python watcher.py
 agentdir/
 ├── watcher.py           ← Pääohjelma (käynnistä tämä)
 ├── verify_setup.py      ← Paikallinen tarkistus (Ollama + API)
-├── server.py            ← A2A REST API + mDNS (valinnainen)
+├── server.py            ← A2A REST API + mDNS + Web-UI (valinnainen)
+├── ui_routes.py         ← Dashboard (Jinja2)
+├── web/                 ← UI-mallit ja CSS (templates, static)
 ├── rag_memory.py        ← Semanttinen muisti (ChromaDB)
 ├── llm_client.py        ← LLM-asiakasohjelma + fallback
 ├── file_parser.py       ← PDF, CSV, TXT, MD, JSON
@@ -197,6 +199,16 @@ curl -X POST http://TOISEN_AGENTIN_IP:8080/task \
   -d '{"task": "Analysoi tämä data...", "from": "MinunAgentti"}'
 ```
 
+### Web-UI (selain)
+
+Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa selaimessa:
+
+- **http://127.0.0.1:8080/** → uudelleenohjaus dashboardille  
+- **http://127.0.0.1:8080/ui/** → Inbox- ja Outbox-listat, RAG-/evoluutiotilanne, linkit **OpenAPI `/docs`** ja **ReDoc**  
+- Tiedostonäkymä: klikkaa listan tiedostonimeä (vain `Inbox/` ja `Outbox/`, ei polkupakoja).
+
+**Valinnainen suojaus:** aseta ympäristömuuttuja `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin UI-reitit (`/` ja `/ui/...`) vaativat HTTP-otsikon `X-AgentDir-Key` saman arvon kanssa (selaimessa tarvitset laajennuksen tai käytät UI:ta vain ilman salasanaa lokaalisti).
+
 ---
 
 ## 🐛 Tunnetut rajoitukset (rehellisesti)
@@ -218,7 +230,7 @@ Katso [CONTRIBUTING.md](CONTRIBUTING.md) (testit, PR-käytäntö, roadmap). Tiet
 
 Erityisesti tarvitaan:
 - OCR-tuki skannautuille PDF:ille
-- Tauri-UI (desktop dashboard)
+- Web-UI:n laajennukset (tehtävän luonti selaimesta, tiukempi auth)
 - Lisää template-rooleja
 
 ---
