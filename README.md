@@ -75,6 +75,8 @@ python watcher.py
 
 **Pikakäynnistys:** `.\run.ps1` (Windows) tai `./run.sh` (Linux/macOS; ensin kerran `chmod +x run.sh`). Skripti käyttää `.venv`-Pythonia suoraan.
 
+**Windows – kaikki kerralla:** `Set-ExecutionPolicy -Scope Process Bypass; .\start-all.ps1` käynnistää tarvittaessa asennuksen, `verify_setup.py`:n, watcherin ja serverin (kaksi konsoli-ikkunaa + Web-UI). Parametrit: `-SkipVerify`, `-SkipOllamaCheck`, `-WatcherOnly`, `-ServerOnly`, `-Force`.
+
 ---
 
 ## 📁 Kansiorakenne
@@ -100,6 +102,7 @@ agentdir/
 ├── install.ps1
 ├── run.sh
 ├── run.ps1
+├── start-all.ps1
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-stack.yml
