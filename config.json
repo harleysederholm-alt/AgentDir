@@ -67,7 +67,7 @@
   },
 
   "pdf": {
-    "ocr_enabled": false,
+    "ocr_enabled": true,
     "ocr_lang": "fin+eng",
     "ocr_max_pages": 30,
     "ocr_dpi": 200

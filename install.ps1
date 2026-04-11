@@ -34,6 +34,17 @@ if (-not (Test-Path ".venv")) {
 
 & .\.venv\Scripts\python.exe -m pip install --quiet --upgrade pip
 & .\.venv\Scripts\pip.exe install --quiet -r requirements.txt
+if (Test-Path "requirements-ocr.txt") {
+    Write-Host "   OCR-riippuvuudet (pdf2image, pytesseract)..."
+    & .\.venv\Scripts\pip.exe install --quiet -r requirements-ocr.txt 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "   Varoitus: OCR-paketit jäivät osittain asentamatta (Tesseract/Poppler erikseen)." -ForegroundColor Yellow
+    }
+}
+if (Test-Path "pyproject.toml") {
+    Write-Host "   Editable-paketti (pip install -e .)..."
+    & .\.venv\Scripts\pip.exe install --quiet -e .
+}
 
 Write-Host "Riippuvuudet asennettu" -ForegroundColor Green
 
@@ -58,6 +69,21 @@ if ($ollama) {
         if ($LASTEXITCODE -ne 0) { Write-Host "   Varoitus: mallin $mainModel lataus epäonnistui" -ForegroundColor Yellow }
         & ollama pull $embModel
         if ($LASTEXITCODE -ne 0) { Write-Host "   Varoitus: mallin $embModel lataus epäonnistui" -ForegroundColor Yellow }
+        $embFb = $cfg.embedding.fallback
+        if ($embFb -and "$embFb".Trim()) {
+            Write-Host "   ollama pull $embFb ..."
+            & ollama pull "$embFb"
+            if ($LASTEXITCODE -ne 0) { Write-Host "   Varoitus: $embFb" -ForegroundColor Yellow }
+        }
+        if ($cfg.llm.fallback_models) {
+            foreach ($m in $cfg.llm.fallback_models) {
+                if ($m -and "$m".Trim()) {
+                    Write-Host "   ollama pull $m ..."
+                    & ollama pull "$m"
+                    if ($LASTEXITCODE -ne 0) { Write-Host "   Varoitus: $m" -ForegroundColor Yellow }
+                }
+            }
+        }
     }
     catch {
         Write-Host "   Ollama ei vastaa (käynnistä: ollama serve)" -ForegroundColor Yellow
