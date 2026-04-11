@@ -77,6 +77,23 @@ python watcher.py
 
 **Windows – kaikki kerralla:** `Set-ExecutionPolicy -Scope Process Bypass; .\start-all.ps1` käynnistää tarvittaessa asennuksen, `verify_setup.py`:n, watcherin ja serverin (kaksi konsoli-ikkunaa), avaa selaimen Web-UI:hin (ohita: `-NoBrowser`). Parametrit: `-SkipVerify`, `-SkipOllamaCheck`, `-WatcherOnly`, `-ServerOnly`, `-Force`, `-NoBrowser`.
 
+### Asennus pip-pakettina (valinnainen)
+
+Projektihakemistossa:
+
+```bash
+pip install -e .
+# Valinnaiset komennot (kun venv aktiivinen ja PATH päivittynyt):
+agentdir-watcher
+agentdir-server
+```
+
+OCR-riippuvuudet erikseen: `pip install -e ".[ocr]"` tai `pip install -r requirements-ocr.txt`.
+
+### Tauri-työpöytä (valinnainen)
+
+Katso [desktop/README.md](desktop/README.md). Käynnistä ensin `python server.py`, sitten `desktop/`-hakemistossa `npm install` ja `npm run tauri dev`.
+
 ---
 
 ## 📁 Kansiorakenne
@@ -97,7 +114,10 @@ agentdir/
 ├── config.json          ← Konfiguraatio (muokkaa tätä!)
 ├── manifest.json        ← Julkiset kyvyt (A2A)
 ├── requirements.txt
+├── requirements-ocr.txt
 ├── requirements-dev.txt
+├── pyproject.toml
+├── desktop/             ← Tauri-työpöytä (npm + Rust)
 ├── install.sh
 ├── install.ps1
 ├── run.sh
@@ -180,7 +200,7 @@ Terveystarkistus osuu `GET http://127.0.0.1:8080/status` (A2A käynnissä `both`
 
 - Älä julkaise `server.py`:n porttia suoraan internetiin ilman **TLS:ää**, **reverse proxya** (Caddy, Traefik, nginx) ja **todennusta**. Oletus-CORS (`*`) on tarkoitettu lähiverkon / kehityksen helppouteen.
 - Sandbox on parannus, ei täyttä eristystä; katso [SECURITY.md](SECURITY.md) ja tunnetut rajoitukset alla.
-- `server.py` lukee `config.json`:in käynnistyksessä: muutokset vaativat prosessin uudelleenkäynnistyksen, ellei tätä myöhemmin laajenneta.
+- `server.py` käyttää `config_manager.py`:n hot-reloadia: useimmat `config.json`-muutokset näkyvät API:ssa ja Web-UI:ssa ilman uudelleenkäynnistystä (noin 3 s viive). **Kuunneltava portti** (`a2a.port`) luetaan käynnistyksessä — portin vaihto vaatii palvelimen uudelleenkäynnistyksen.
 
 ---
 
@@ -210,13 +230,13 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 - **http://127.0.0.1:8080/ui/** → Inbox- ja Outbox-listat, RAG-/evoluutiotilanne, linkit **OpenAPI `/docs`** ja **ReDoc**  
 - Tiedostonäkymä: klikkaa listan tiedostonimeä (vain `Inbox/` ja `Outbox/`, ei polkupakoja).
 
-**Valinnainen suojaus:** aseta ympäristömuuttuja `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin UI-reitit (`/` ja `/ui/...`) vaativat HTTP-otsikon `X-AgentDir-Key` saman arvon kanssa (selaimessa tarvitset laajennuksen tai käytät UI:ta vain ilman salasanaa lokaalisti).
+**Valinnainen suojaus:** aseta ympäristömuuttuja `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin UI-sivut vaativat otsikon `X-AgentDir-Key` tai lomakkeen kentän `agentdir_key` (tehtävän lähetys selaimesta). Ilman salasanaa UI on avoin kaikille, joilla on pääsy porttiin — älä jätä näin tuotantoon.
 
 ---
 
 ## 🐛 Tunnetut rajoitukset (rehellisesti)
 
-- **PDF**: Skannatut PDF:t (kuvapohjaiset) eivät toimi – tarvitaan OCR
+- **PDF / OCR**: Skannatut PDF:t vaativat `config.json` → `pdf.ocr_enabled: true` sekä `pip install -r requirements-ocr.txt` (tai `pip install -e ".[ocr]"`) ja järjestelmään **Tesseract** + **Poppler** (Windows: asenna ja lisää `PATH`; katso `requirements-ocr.txt`).
 - **Sandbox-turvallisuus**: Subprocess-eristys riittää useimpiin käyttöihin, mutta ei ole täysin tiivis. Tuotantokäytössä käytä Docker-konttia.
 - **Evoluutio**: Vaatii vähintään 10 tehtävää ennen kuin se alkaa toimia
 - **mDNS**: Ei toimi kaikkien VPN:ien tai Docker-verkkojen kanssa – käytä silloin suoria IP-osoitteita
@@ -234,8 +254,10 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 | Web-UI `/ui/`, OpenAPI `/docs` | Valmis |
 | Docker / Compose, GitHub Actions CI | Valmis |
 | `verify_setup.py`, `start-all.ps1`, `install.ps1/.sh` | Valmis |
-| OCR skannatuille PDF:ille | Ei (roadmap) |
-| `server.py` lukee `config.json` vain käynnistyksessä | Rajoitus (uudelleenkäynnistys muutoksiin) |
+| OCR skannatuille PDF:ille | Valmis (`pdf.ocr_enabled` + `requirements-ocr.txt`) |
+| `server.py` + Web-UI: config hot-reload | Valmis (portti vain käynnistyksessä) |
+| Tauri-työpöytä | Valmis (`desktop/`, katso `desktop/README.md`) |
+| `pip install -e .` | Valmis (`pyproject.toml`, komennot `agentdir-watcher` / `agentdir-server`) |
 
 ---
 
@@ -248,9 +270,7 @@ Katso [CONTRIBUTING.md](CONTRIBUTING.md) (testit, PR-käytäntö, roadmap). Tiet
 3. Pull Request – kaikki tervetulleita
 
 Erityisesti tarvitaan:
-- OCR-tuki skannautuille PDF:ille
-- Web-UI:n laajennukset (tehtävän luonti selaimesta, tiukempi auth)
-- Lisää template-rooleja
+- Lisää template-rooleja ja kovempi tuotanto-auth (proxy + TLS) tarvittaessa
 
 ---
 

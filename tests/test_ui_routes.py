@@ -50,3 +50,53 @@ def test_ui_no_secret_allows_local_dashboard():
     client = TestClient(app)
     r = client.get("/ui/")
     assert r.status_code == 200
+
+
+def test_ui_submit_writes_task_to_inbox(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("AGENTDIR_UI_SECRET", raising=False)
+    (tmp_path / "Inbox").mkdir(parents=True)
+    (tmp_path / "Outbox").mkdir(parents=True)
+    (tmp_path / "memory").mkdir(parents=True)
+    (tmp_path / "config.json").write_text("{}", encoding="utf-8")
+
+    import ui_routes
+
+    monkeypatch.setattr(ui_routes, "ROOT", tmp_path)
+
+    from ui_routes import register_ui
+
+    app = FastAPI()
+    register_ui(app)
+    client = TestClient(app)
+    r = client.post("/ui/submit", data={"text": "Tehtävä testistä"}, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers.get("location", "").endswith("/ui/")
+    matches = list((tmp_path / "Inbox").glob("ui_*_task.md"))
+    assert len(matches) == 1
+    assert "Tehtävä testistä" in matches[0].read_text(encoding="utf-8")
+
+
+def test_ui_submit_requires_form_key_when_secret_set(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("AGENTDIR_UI_SECRET", "sekret")
+    (tmp_path / "Inbox").mkdir(parents=True)
+    (tmp_path / "Outbox").mkdir(parents=True)
+    (tmp_path / "memory").mkdir(parents=True)
+    (tmp_path / "config.json").write_text("{}", encoding="utf-8")
+
+    import ui_routes
+
+    monkeypatch.setattr(ui_routes, "ROOT", tmp_path)
+
+    from ui_routes import register_ui
+
+    app = FastAPI()
+    register_ui(app)
+    client = TestClient(app)
+    bad = client.post("/ui/submit", data={"text": "x"}, follow_redirects=False)
+    assert bad.status_code == 401
+    ok = client.post(
+        "/ui/submit",
+        data={"text": "x", "agentdir_key": "sekret"},
+        follow_redirects=False,
+    )
+    assert ok.status_code == 303

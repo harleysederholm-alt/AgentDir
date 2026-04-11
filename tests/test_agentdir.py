@@ -146,6 +146,26 @@ class TestFileParser:
         result = parse(f)
         assert "50" in result or "ensimmäiset" in result  # truncation notice
 
+    def test_pdf_blank_without_ocr_raises(self, tmp_agent_dir, monkeypatch):
+        pytest.importorskip("pypdf")
+        from pypdf import PdfWriter
+
+        from file_parser import parse
+
+        p = tmp_agent_dir / "Inbox" / "blank.pdf"
+        w = PdfWriter()
+        w.add_blank_page(width=72, height=72)
+        with open(p, "wb") as f:
+            w.write(f)
+
+        cfg = json.loads((tmp_agent_dir / "config.json").read_text(encoding="utf-8"))
+        cfg["pdf"] = {"ocr_enabled": False}
+        (tmp_agent_dir / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
+        monkeypatch.chdir(tmp_agent_dir)
+
+        with pytest.raises(ValueError, match="skannattu|OCR"):
+            parse(p)
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 2. sandbox_executor – AST-pohjainen tarkistus

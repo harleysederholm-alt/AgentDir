@@ -9,6 +9,9 @@ Endpointit:
   POST /task        – Vastaanota tehtävä toiselta agentilta
   POST /rag/query   – Hae tästä agentista semanttisesti
   GET  /stats       – Evolution-tilasto
+
+Konfiguraatio: config_manager.ConfigManager + taustaseuranta (muutokset ilman täyttä uudelleenkäynnistystä).
+Kuunneltava portti (a2a.port) luetaan käynnistyksessä; portin vaihto vaatii palvelimen uudelleenkäynnistyksen.
 """
 
 from __future__ import annotations
@@ -21,20 +24,79 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger("agentdir.server")
 
-# Lataa config
+# ── Konfiguraatio (hot-reload) ───────────────────────────────────────────────
+
 _config_path = Path("config.json")
-_config: dict = json.loads(_config_path.read_text(encoding="utf-8")) if _config_path.exists() else {}
-_a2a_cfg = _config.get("a2a", {})
-PORT = _a2a_cfg.get("port", 8080)
-RATE_LIMIT = _a2a_cfg.get("rate_limit_per_minute", 60)
+
+
+def _read_bind_port() -> int:
+    if _config_path.exists():
+        try:
+            d = json.loads(_config_path.read_text(encoding="utf-8"))
+            return int(d.get("a2a", {}).get("port", 8080))
+        except Exception:
+            pass
+    return 8080
+
+
+BIND_PORT = _read_bind_port()
+
+
+class _EmptyConfigManager:
+    """Kun config.json puuttuu — sama käyttäytyminen kuin aiemmin tyhjällä dictillä."""
+
+    def all(self) -> dict[str, Any]:
+        return {}
+
+
+_server_cfg: Any = None
+
+
+def _init_config_backend() -> Any:
+    global _server_cfg
+    if _server_cfg is not None:
+        return _server_cfg
+    if not _config_path.exists():
+        logger.warning("config.json puuttuu → tyhjä konfiguraatio")
+        _server_cfg = _EmptyConfigManager()
+        return _server_cfg
+    from config_manager import ConfigManager
+
+    cm = ConfigManager(_config_path)
+
+    def _on_change(data: dict) -> None:
+        try:
+            new_port = int(data.get("a2a", {}).get("port", 8080))
+            if new_port != BIND_PORT:
+                logger.info(
+                    "config.json: a2a.port=%s (palvelin kuuntelee %s) — portin muutos vaatii uudelleenkäynnistyksen.",
+                    new_port,
+                    BIND_PORT,
+                )
+        except Exception:
+            pass
+
+    cm.on_change(_on_change)
+    cm.watch(interval=3.0)
+    _server_cfg = cm
+    return _server_cfg
+
+
+_init_config_backend()
+
+
+def get_server_config() -> dict[str, Any]:
+    """Tuorein config (thread-safe). Käytä reiteissä tämän sijaan moduulitason _config:ia."""
+    return _server_cfg.all()
+
 
 try:
     from fastapi import FastAPI, Request, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import JSONResponse
     import uvicorn
 except ImportError:
     raise RuntimeError("FastAPI puuttuu: pip install fastapi uvicorn[standard]")
@@ -52,11 +114,14 @@ app.add_middleware(
 
 _request_counts: dict[str, list[float]] = defaultdict(list)
 
+
 def check_rate_limit(client_ip: str) -> bool:
     now = time.time()
     window = 60.0
+    cfg = get_server_config()
+    limit = int(cfg.get("a2a", {}).get("rate_limit_per_minute", 60))
     _request_counts[client_ip] = [t for t in _request_counts[client_ip] if now - t < window]
-    if len(_request_counts[client_ip]) >= RATE_LIMIT:
+    if len(_request_counts[client_ip]) >= limit:
         return False
     _request_counts[client_ip].append(now)
     return True
@@ -64,12 +129,14 @@ def check_rate_limit(client_ip: str) -> bool:
 
 # ── Endpointit ────────────────────────────────────────────────────────────────
 
+
 @app.get("/status")
 async def status():
+    cfg = get_server_config()
     return {
-        "name": _config.get("name"),
-        "role": _config.get("role"),
-        "version": _config.get("version"),
+        "name": cfg.get("name"),
+        "role": cfg.get("role"),
+        "version": cfg.get("version"),
         "status": "online",
         "timestamp": datetime.now().isoformat(),
     }
@@ -87,7 +154,10 @@ async def get_manifest():
 async def get_stats():
     try:
         from evolution_engine import EvolutionEngine
-        ev = EvolutionEngine(_config)
+
+        cfg = get_server_config()
+        cfg_p = str(_config_path.resolve()) if _config_path.exists() else "config.json"
+        ev = EvolutionEngine(cfg, cfg_p)
         return ev.get_stats()
     except Exception as e:
         return {"error": str(e)}
@@ -114,7 +184,6 @@ async def receive_task(request: Request):
 
     logger.info("📨 A2A-tehtävä agentilta '%s': %s...", sender, task[:80])
 
-    # Tallenna tehtävä Inboxiin (watcher poimii sen)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     inbox_file = Path("Inbox") / f"a2a_{ts}_from_{sender}.md"
     inbox_file.write_text(
@@ -140,7 +209,8 @@ async def rag_query(request: Request):
 
     try:
         from rag_memory import RAGMemory
-        rag = RAGMemory(_config)
+
+        rag = RAGMemory(get_server_config())
         result = rag.query(query, n_results=n)
         return {"query": query, "result": result}
     except Exception as e:
@@ -149,8 +219,11 @@ async def rag_query(request: Request):
 
 # ── mDNS rekisteröinti ────────────────────────────────────────────────────────
 
+
 def _register_mdns():
-    if not _a2a_cfg.get("mdns_enabled", True):
+    cfg = get_server_config()
+    a2a = cfg.get("a2a", {})
+    if not a2a.get("mdns_enabled", True):
         return
     try:
         from zeroconf import Zeroconf, ServiceInfo
@@ -163,17 +236,17 @@ def _register_mdns():
         zc = Zeroconf()
         info = ServiceInfo(
             "_agentdir._tcp.local.",
-            f"{_config.get('name', 'Agent')}._agentdir._tcp.local.",
+            f"{cfg.get('name', 'Agent')}._agentdir._tcp.local.",
             addresses=[socket.inet_aton(local_ip)],
-            port=PORT,
+            port=BIND_PORT,
             properties={
-                b"role": _config.get("role", "").encode(),
-                b"version": _config.get("version", "1.0.0").encode(),
-                b"swarm": b"true" if _config.get("swarm", {}).get("enabled") else b"false",
+                b"role": cfg.get("role", "").encode(),
+                b"version": cfg.get("version", "1.0.0").encode(),
+                b"swarm": b"true" if cfg.get("swarm", {}).get("enabled") else b"false",
             },
         )
         zc.register_service(info)
-        logger.info("🌐 mDNS rekisteröity: %s:%d", local_ip, PORT)
+        logger.info("🌐 mDNS rekisteröity: %s:%d", local_ip, BIND_PORT)
 
         while True:
             time.sleep(3600)
@@ -194,14 +267,20 @@ async def discover():
             def add_service(self, zc, type_, name):
                 info = zc.get_service_info(type_, name)
                 if info:
-                    found.append({
-                        "name": name.split(".")[0],
-                        "role": info.properties.get(b"role", b"").decode(errors="ignore"),
-                        "ip": socket.inet_ntoa(info.addresses[0]) if info.addresses else "?",
-                        "port": info.port,
-                    })
-            def remove_service(self, *a): pass
-            def update_service(self, *a): pass
+                    found.append(
+                        {
+                            "name": name.split(".")[0],
+                            "role": info.properties.get(b"role", b"").decode(errors="ignore"),
+                            "ip": socket.inet_ntoa(info.addresses[0]) if info.addresses else "?",
+                            "port": info.port,
+                        }
+                    )
+
+            def remove_service(self, *a):
+                pass
+
+            def update_service(self, *a):
+                pass
 
         zc = Zeroconf()
         ServiceBrowser(zc, "_agentdir._tcp.local.", _Listener())
@@ -217,8 +296,9 @@ async def discover():
 
 # ── Web-UI (dashboard: Inbox / Outbox) ────────────────────────────────────────
 try:
-    from ui_routes import register_ui
+    from ui_routes import register_ui, set_ui_config_getter
 
+    set_ui_config_getter(get_server_config)
     register_ui(app)
 except Exception as e:
     logger.warning("Web-UI ei käynnistynyt: %s", e)
@@ -226,8 +306,14 @@ except Exception as e:
 
 # ── Käynnistys ────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
+
+def main() -> None:
     threading.Thread(target=_register_mdns, daemon=True).start()
-    print(f"🌐 A2A-serveri käynnissä → http://0.0.0.0:{PORT}")
-    print(f"   Web-UI → http://127.0.0.1:{PORT}/ui/  (OpenAPI: /docs)")
-    uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="warning")
+    print(f"🌐 A2A-serveri käynnissä → http://0.0.0.0:{BIND_PORT}")
+    print(f"   Web-UI → http://127.0.0.1:{BIND_PORT}/ui/  (OpenAPI: /docs)")
+    print("   config.json päivittyy taustalla (~3 s); portin vaihto vaatii uudelleenkäynnistyksen.")
+    uvicorn.run(app, host="0.0.0.0", port=BIND_PORT, log_level="warning")
+
+
+if __name__ == "__main__":
+    main()

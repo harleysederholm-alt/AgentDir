@@ -1,7 +1,8 @@
 """
 AgentDir – kevyt web-UI (FastAPI + Jinja2).
 Listaa Inbox/Outbox, näyttää tiedoston sisällön turvallisella polulla.
-Valinnainen: ympäristömuuttuja AGENTDIR_UI_SECRET + otsikko X-AgentDir-Key.
+Valinnainen: ympäristömuuttuja AGENTDIR_UI_SECRET + otsikko X-AgentDir-Key
+(tai POST-lomakkeessa kenttä agentdir_key).
 """
 
 from __future__ import annotations
@@ -9,11 +10,13 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 from urllib.parse import quote, unquote
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -24,6 +27,14 @@ ROOT = Path(__file__).resolve().parent
 WEB_DIR = ROOT / "web"
 
 ALLOWED_FOLDERS = frozenset({"Inbox", "Outbox"})
+
+_config_getter: Callable[[], dict] | None = None
+
+
+def set_ui_config_getter(fn: Callable[[], dict]) -> None:
+    """server.py rekisteröi get_server_config, jotta UI näkee config-hot-reloadin."""
+    global _config_getter
+    _config_getter = fn
 
 
 def _ui_secret() -> str:
@@ -41,11 +52,26 @@ async def require_ui_key(request: Request) -> None:
         )
 
 
+def _verify_ui_access(request: Request, form_key: str = "") -> None:
+    """Sama kuin require_ui_key; POST-lomakkeelle voi antaa salasanan kentässä agentdir_key."""
+    secret = _ui_secret()
+    if not secret:
+        return
+    if request.headers.get("X-AgentDir-Key", "") == secret:
+        return
+    if request.method == "POST" and form_key == secret:
+        return
+    raise HTTPException(
+        status_code=401,
+        detail="Aseta X-AgentDir-Key tai lomakkeen kenttä agentdir_key (POST).",
+    )
+
+
 def _templates() -> Jinja2Templates:
     return Jinja2Templates(directory=str(ROOT / "web" / "templates"))
 
 
-router = APIRouter(prefix="/ui", tags=["ui"], dependencies=[Depends(require_ui_key)])
+router = APIRouter(prefix="/ui", tags=["ui"])
 
 
 def safe_file_in_root(root: Path, folder: str, filename: str) -> Path:
@@ -68,6 +94,11 @@ def safe_file_in_root(root: Path, folder: str, filename: str) -> Path:
 
 
 def _load_config() -> dict:
+    if _config_getter is not None:
+        try:
+            return _config_getter()
+        except Exception:
+            pass
     p = ROOT / "config.json"
     if not p.exists():
         return {}
@@ -76,6 +107,22 @@ def _load_config() -> dict:
 
 def _safe_file_path(folder: str, filename: str) -> Path:
     return safe_file_in_root(ROOT, folder, filename)
+
+
+def _max_upload_bytes(cfg: dict) -> int:
+    try:
+        mb = int(cfg.get("ui", {}).get("max_upload_mb", 10))
+    except Exception:
+        mb = 10
+    return max(1, mb) * 1024 * 1024
+
+
+def _sanitize_upload_filename(name: str) -> str:
+    base = Path(name).name
+    base = re.sub(r"[^a-zA-Z0-9._-]+", "_", base).strip("._") or "upload"
+    if base.startswith("."):
+        base = "upload_" + base.lstrip(".")
+    return base[:120]
 
 
 def _list_dir(folder: str, limit: int = 200) -> list[dict]:
@@ -122,7 +169,7 @@ def _evo_stats(config: dict) -> dict:
         return {"total_tasks": 0, "success_rate": 0.0, "prompt_version": "?"}
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse, dependencies=[Depends(require_ui_key)])
 async def ui_dashboard(request: Request):
     config = _load_config()
     ctx = {
@@ -138,6 +185,41 @@ async def ui_dashboard(request: Request):
     return _templates().TemplateResponse(request, "dashboard.html", ctx)
 
 
+@router.post("/submit", include_in_schema=False)
+async def ui_submit_post(
+    request: Request,
+    text: str = Form(""),
+    agentdir_key: str = Form(""),
+    file: UploadFile | None = File(None),
+):
+    _verify_ui_access(request, agentdir_key)
+    inbox = ROOT / "Inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+    cfg = _load_config()
+    max_bytes = _max_upload_bytes(cfg)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    to_write: list[tuple[str, bytes]] = []
+
+    raw_text = (text or "").strip()
+    if file is not None and getattr(file, "filename", None):
+        data = await file.read()
+        if len(data) > max_bytes:
+            raise HTTPException(413, "Tiedosto liian suuri (katso config ui.max_upload_mb).")
+        fname = _sanitize_upload_filename(file.filename)
+        to_write.append((f"ui_{ts}_{fname}", data))
+
+    if raw_text:
+        to_write.append((f"ui_{ts}_task.md", f"# Tehtävä (Web-UI)\n\n{raw_text}\n".encode("utf-8")))
+
+    if not to_write:
+        raise HTTPException(400, "Anna teksti tai tiedosto.")
+
+    for name, blob in to_write:
+        (inbox / name).write_bytes(blob)
+
+    return RedirectResponse(url="/ui/", status_code=303)
+
+
 def _ctx_file_view(folder: str, filename: str, content: str) -> dict:
     cfg = _load_config()
     return {
@@ -149,7 +231,7 @@ def _ctx_file_view(folder: str, filename: str, content: str) -> dict:
     }
 
 
-@router.get("/inbox/{filename}", response_class=HTMLResponse)
+@router.get("/inbox/{filename}", response_class=HTMLResponse, dependencies=[Depends(require_ui_key)])
 async def ui_inbox_file(request: Request, filename: str):
     fn = unquote(filename)
     if "/" in fn or "\\" in fn or ".." in fn:
@@ -161,7 +243,7 @@ async def ui_inbox_file(request: Request, filename: str):
     return _templates().TemplateResponse(request, "file_view.html", ctx)
 
 
-@router.get("/outbox/{filename}", response_class=HTMLResponse)
+@router.get("/outbox/{filename}", response_class=HTMLResponse, dependencies=[Depends(require_ui_key)])
 async def ui_outbox_file(request: Request, filename: str):
     fn = unquote(filename)
     if "/" in fn or "\\" in fn or ".." in fn:

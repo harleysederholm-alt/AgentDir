@@ -1,0 +1,6 @@
+# OCR skannatuille PDF:ille (valinnainen)
+# Järjestelmä: Tesseract + Poppler (PATH:iin). Windows: Chocolatey tesseract poppler tai asennusohjelmat.
+-r requirements.txt
+pdf2image>=1.17.0
+pytesseract>=0.3.10
+Pillow>=10.0.0

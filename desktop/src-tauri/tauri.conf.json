@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AgentDir",
+  "version": "1.0.0",
+  "identifier": "com.agentdir.desktop",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devUrl": "http://127.0.0.1:8080/ui/",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "AgentDir",
+        "width": 1280,
+        "height": 820,
+        "resizable": true,
+        "url": "http://127.0.0.1:8080/ui/"
+      }
+    ]
+  },
+  "bundle": {
+    "active": false
+  }
+}

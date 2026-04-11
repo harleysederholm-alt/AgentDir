@@ -1,9 +1,24 @@
 {% extends "base.html" %}
 {% block title %}AgentDir – {{ agent_name }}{% endblock %}
 {% block main %}
-<p style="color: var(--muted); margin-top: 0;">Watcher lukee <strong>Inbox/</strong> ja kirjoittaa <strong>Outbox/</strong>. Pudota tiedosto Inboxiin tai lähetä tehtävä A2A:n kautta.</p>
+<p style="color: var(--muted); margin-top: 0;">Watcher lukee <strong>Inbox/</strong> ja kirjoittaa <strong>Outbox/</strong>. Voit pudottaa tiedoston, kirjoittaa tehtävän alla tai käyttää A2A <code>POST /task</code>.</p>
 
 <div class="grid">
+  <section class="card" style="grid-column: 1 / -1;">
+    <h2>Uusi tehtävä → Inbox</h2>
+    <form action="/ui/submit" method="post" enctype="multipart/form-data" class="stack">
+      <label for="ui-text">Teksti (markdown)</label>
+      <textarea id="ui-text" name="text" rows="5" placeholder="Kirjoita tehtävä tähän…"></textarea>
+      <label for="ui-file">Tai tiedosto</label>
+      <input id="ui-file" type="file" name="file" />
+      {% if ui_secret_set %}
+      <label for="ui-key">UI-salasana (<code>AGENTDIR_UI_SECRET</code>)</label>
+      <input id="ui-key" type="password" name="agentdir_key" autocomplete="off" />
+      {% endif %}
+      <button type="submit">Lähetä Inboxiin</button>
+    </form>
+  </section>
+
   <section class="card">
     <h2>Inbox ({{ inbox_files|length }})</h2>
     {% if inbox_files %}

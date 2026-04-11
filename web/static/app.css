@@ -70,3 +70,34 @@ pre.file {
 }
 .badge { display: inline-block; background: var(--border); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
 footer { padding: 1rem 1.5rem; color: var(--muted); font-size: 0.8rem; text-align: center; }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 42rem;
+}
+.stack label { font-size: 0.85rem; color: var(--muted); }
+.stack textarea,
+.stack input[type="file"],
+.stack input[type="password"] {
+  width: 100%;
+  background: #0a0e14;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+}
+.stack textarea { min-height: 6rem; resize: vertical; }
+.stack button[type="submit"] {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+.stack button[type="submit"]:hover { filter: brightness(1.08); }

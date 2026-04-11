@@ -64,5 +64,16 @@
     "port": 8080,
     "mdns_enabled": true,
     "rate_limit_per_minute": 60
+  },
+
+  "pdf": {
+    "ocr_enabled": false,
+    "ocr_lang": "fin+eng",
+    "ocr_max_pages": 30,
+    "ocr_dpi": 200
+  },
+
+  "ui": {
+    "max_upload_mb": 10
   }
 }
