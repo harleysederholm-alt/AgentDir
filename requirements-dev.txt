@@ -1,0 +1,2 @@
+# Development and CI (optional locally)
+pytest>=8.0.0

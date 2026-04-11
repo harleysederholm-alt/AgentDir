@@ -1,0 +1,35 @@
+# AgentDir – paikallinen ajo (Compose V2)
+# Ollama host-koneella: päivitä volumeen tulevaan config.json:iin
+#   llm.endpoint ja embedding.endpoint → http://host.docker.internal:11434/...
+#
+# Käynnistys: docker compose up --build
+
+services:
+  agentdir:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agentdir:local
+    command: both
+    ports:
+      - "8080:8080"
+    volumes:
+      - agentdir_data:/agentdir
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/status', timeout=4).read()",
+        ]
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  agentdir_data:

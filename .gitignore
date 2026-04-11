@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# AgentDir runtime-data (ei versionhallintaan)
+memory/chroma/
+memory/task_history.jsonl
+evolution.log
+swarm/
+
+# Outbox ja Inbox (käyttäjän data)
+Inbox/*
+Outbox/*
+!Inbox/.gitkeep
+!Outbox/.gitkeep
+
+# Mallit
+*.gguf
+*.bin
+
+# OS-tiedostot
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~

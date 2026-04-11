@@ -1,0 +1,68 @@
+{
+  "name": "MyAgent",
+  "version": "1.0.0",
+  "role": "Älykäs tutkija ja prosessoija",
+  "language": "fi",
+
+  "llm": {
+    "provider": "ollama",
+    "endpoint": "http://localhost:11434/v1/chat/completions",
+    "model": "llama3.2:3b",
+    "temperature": 0.7,
+    "max_tokens": 4096,
+    "timeout": 180,
+    "fallback_models": ["phi3:mini", "mistral:7b"]
+  },
+
+  "embedding": {
+    "provider": "ollama",
+    "endpoint": "http://localhost:11434/api/embed",
+    "model": "mxbai-embed-large",
+    "fallback": "nomic-embed-text"
+  },
+
+  "prompt_templates": {
+    "default": "Olet {role}. Käytä alla olevaa aiempaa kontekstia apuna ja suorita tehtävä.\n\n--- Aiempi konteksti (RAG) ---\n{context}\n\n--- Nykyinen tehtävä ---\n{content}\n\nVastaa suomeksi. Vastauksen rakenne:\n1. Tiivistelmä\n2. Analyysi\n3. Toimintaehdotukset (jos relevantteja)",
+    "code": "Olet {role}. Sinun tehtäväsi on kirjoittaa Python-koodi joka ratkaisee ongelman.\n\nRAG-konteksti:\n{context}\n\nTehtävä:\n{content}\n\nPalauta AINOASTAAN JSON-muodossa:\n{{\"reasoning\": \"lyhyt selitys\", \"code\": \"täydellinen ajettava Python-koodi\", \"expected_output\": \"mitä odotat koodin tuottavan\"}}"
+  },
+
+  "watchdog": {
+    "supported_extensions": [".txt", ".md", ".pdf", ".csv", ".json"],
+    "ignore_patterns": [".*", "~*", "*.tmp", "*.swp"],
+    "debounce_seconds": 1.0
+  },
+
+  "rag": {
+    "enabled": true,
+    "n_results": 3,
+    "max_context_chars": 3000
+  },
+
+  "sandbox": {
+    "enabled": true,
+    "timeout_seconds": 30,
+    "max_output_chars": 10000,
+    "max_correction_attempts": 3
+  },
+
+  "swarm": {
+    "enabled": true,
+    "trigger_keywords": ["swarm", "hajota", "useita", "rinnakkain", "laaja analyysi"],
+    "max_children": 5,
+    "child_timeout_seconds": 300
+  },
+
+  "evolution": {
+    "enabled": true,
+    "evaluate_every_n_tasks": 5,
+    "min_tasks_before_evolve": 10,
+    "success_threshold": 0.7
+  },
+
+  "a2a": {
+    "enabled": true,
+    "port": 8080,
+    "mdns_enabled": true,
+    "rate_limit_per_minute": 60
+  }
+}

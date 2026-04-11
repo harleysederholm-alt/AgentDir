@@ -1,0 +1,18 @@
+{
+  "name": "MyAgent",
+  "version": "1.0.0",
+  "protocol": "agentdir-a2a/1.0",
+  "role": "Älykäs tutkija ja prosessoija",
+  "description": "Yleiskäyttöinen agentti joka osaa tiivistää, analysoida ja ajaa koodia.",
+  "capabilities": ["summarize", "analyze", "code_execution", "rag_query", "swarm_orchestration"],
+  "supported_filetypes": [".txt", ".md", ".pdf", ".csv", ".json"],
+  "endpoints": {
+    "task": "POST /task",
+    "status": "GET /status",
+    "manifest": "GET /manifest",
+    "discover": "GET /discover",
+    "rag_query": "POST /rag/query"
+  },
+  "swarm_compatible": true,
+  "requires_ollama": true
+}

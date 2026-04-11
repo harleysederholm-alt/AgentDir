@@ -1,0 +1,26 @@
+# AgentDir v1.0 – Python-riippuvuudet
+# Asenna: pip install -r requirements.txt
+
+# Ydin
+watchdog>=4.0.0          # Tiedostojärjestelmän tarkkailu
+requests>=2.31.0         # HTTP-kutsut (LLM, embeddings)
+
+# RAG-muisti
+chromadb>=0.5.0          # Paikallinen vektori-DB
+sentence-transformers>=3.0.0  # Fallback-embeddings (jos Ollama ei käytössä)
+
+# Tiedostoformaatit
+pypdf>=4.0.0             # PDF-lukeminen
+
+# A2A-serveri (valinnainen mutta suositeltava)
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+
+# mDNS-discovery (valinnainen)
+zeroconf>=0.131.0
+
+# Dev-työkalut (valinnainen)
+# pytest>=8.0.0
+# black>=24.0.0
+# ruff>=0.4.0

@@ -1,0 +1,70 @@
+version: '3.8'
+
+# AgentDir – Docker Stack (Swarm-deploy)
+# Käyttö: docker stack deploy -c docker-stack.yml agentdir
+
+services:
+
+  # ── Pää-agentti (yksi instanssi) ──────────────────────────────────────────
+  agent-main:
+    image: agentdir:latest
+    command: both  # watcher + a2a-server
+    environment:
+      - AGENT_NAME=MainAgent
+      - AGENT_ROLE=Pääkoordinaattori
+    volumes:
+      - agent-main-data:/agentdir
+    ports:
+      - "8080:8080"
+    networks:
+      - agentnet
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  # ── Tutkija-agentit (skaalautuva) ─────────────────────────────────────────
+  agent-researcher:
+    image: agentdir:latest
+    command: both
+    environment:
+      - AGENT_NAME=Researcher
+      - AGENT_ROLE=Tieteellinen tutkija
+    volumes:
+      - agent-researcher-data:/agentdir
+      - shared-memory:/agentdir/memory  # Jaettu RAG
+    networks:
+      - agentnet
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  # ── Koodari-agentit ────────────────────────────────────────────────────────
+  agent-coder:
+    image: agentdir:latest
+    command: both
+    environment:
+      - AGENT_NAME=Coder
+      - AGENT_ROLE=Python-kehittäjä ja datan visualisoija
+    volumes:
+      - agent-coder-data:/agentdir
+    networks:
+      - agentnet
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+networks:
+  agentnet:
+    driver: overlay
+    attachable: true
+
+volumes:
+  agent-main-data:
+  agent-researcher-data:
+  agent-coder-data:
+  shared-memory:   # Jaettu RAG-muisti kaikille agenteille
