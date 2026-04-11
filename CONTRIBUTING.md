@@ -12,6 +12,8 @@ Thank you for your interest in improving AgentDir.
   source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
   pip install -r requirements.txt
   pip install -r requirements-dev.txt
+  # tai yksi komento (CI:n tapaan):
+  pip install -e ".[dev]"
   ```
 
 - For full functionality (LLM + embeddings), install [Ollama](https://ollama.com) and pull the models referenced in `config.json`.
@@ -51,11 +53,15 @@ See [README.md](README.md) for architecture, configuration, and Docker usage.
 
 ## Roadmap (Phase 2)
 
-Shipped baseline: **Web-UI** at `/ui/` (Inbox/Outbox lists, file view, links to OpenAPI) when `server.py` is running; optional `AGENTDIR_UI_SECRET` + `X-AgentDir-Key` header.
+Shipped: **Web-UI** (`/ui/`), Inbox/Outbox + file view, **tehtävän lähetys** lomakkeella, **HTMX**-päivitys listoille (kun `AGENTDIR_UI_SECRET` ei ole käytössä), OpenAPI-linkit; valinnainen `AGENTDIR_UI_SECRET` + `X-AgentDir-Key` / lomake `agentdir_key`.
+
+Shipped: **A2A**-kovennus: `a2a.cors_origins`, `a2a.api_token` / `AGENTDIR_API_SECRET` (`POST /task`, `POST /rag/query`).
+
+Shipped: **plugins** (`plugins/*.py`) + `hooks`-tapahtumat (katso `plugins/README.md`).
 
 Follow-up ideas:
 
-- Create tasks / upload files from the browser, HTMX live refresh.
-- Stricter authentication and CORS for deployments exposed to the internet (see README “Production / internet”).
+- Session-pohjainen Web-UI-auth (HTMX + salainen UI samaan aikaan).
+- Tiukempi CORS + API-token -tarina Docker / Compose -esimerkeissä.
 
 Open an issue before large UI changes so we can align on scope.

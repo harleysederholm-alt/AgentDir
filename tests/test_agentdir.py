@@ -68,7 +68,7 @@ def tmp_agent_dir(tmp_path: Path) -> Path:
                       "success_threshold": 0.7},
         "watchdog":  {"supported_extensions": [".txt", ".md", ".pdf", ".csv"],
                       "debounce_seconds": 0},
-        "a2a":       {"enabled": False},
+        "a2a":       {"enabled": False, "cors_origins": ["*"], "api_token": ""},
     }
     (tmp_path / "config.json").write_text(json.dumps(config), encoding="utf-8")
     return tmp_path
@@ -165,6 +165,33 @@ class TestFileParser:
 
         with pytest.raises(ValueError, match="skannattu|OCR"):
             parse(p)
+
+    @pytest.mark.skipif(
+        not __import__("shutil").which("tesseract"),
+        reason="Tesseract ei PATHissa",
+    )
+    def test_pdf_ocr_skipped_without_full_stack(self, tmp_agent_dir, monkeypatch):
+        """Jos Tesseract löytyy, tyhjä PDF OCR:llä voi silti epäonnistua (Poppler); ei kaaduta testejä."""
+        pytest.importorskip("pypdf")
+        pytest.importorskip("pytesseract")
+        pytest.importorskip("pdf2image")
+        from pypdf import PdfWriter
+
+        from file_parser import parse
+
+        p = tmp_agent_dir / "Inbox" / "blank2.pdf"
+        w = PdfWriter()
+        w.add_blank_page(width=72, height=72)
+        with open(p, "wb") as f:
+            w.write(f)
+        cfg = json.loads((tmp_agent_dir / "config.json").read_text(encoding="utf-8"))
+        cfg["pdf"] = {"ocr_enabled": True, "ocr_max_pages": 1}
+        (tmp_agent_dir / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
+        monkeypatch.chdir(tmp_agent_dir)
+        try:
+            parse(p)
+        except (ValueError, RuntimeError):
+            pass
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -499,7 +526,7 @@ class TestSwarmManager:
         # Kopioi watcher.py ym. jotta swarm voi kopioida ne
         for fname in ["watcher.py", "rag_memory.py", "sandbox_executor.py",
                       "file_parser.py", "llm_client.py", "evolution_engine.py",
-                      "config_manager.py", "swarm_manager.py"]:
+                      "config_manager.py", "swarm_manager.py", "hooks.py"]:
             src = Path(__file__).parent.parent / fname
             if src.exists():
                 (tmp_agent_dir / fname).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
@@ -546,6 +573,7 @@ class TestSwarmManager:
         assert child is not None
         assert (child / "swarm_manager.py").exists()
         assert (child / "swarm_manager.py").stat().st_size > 100
+        assert (child / "hooks.py").exists()
 
     def test_should_swarm_detects_keyword(self, tmp_agent_dir):
         from swarm_manager import should_swarm
@@ -593,7 +621,8 @@ class TestIntegration:
             # Kopioi skriptit tmp-kansioon
             for fname in ["rag_memory.py", "llm_client.py", "file_parser.py",
                           "sandbox_executor.py", "swarm_manager.py",
-                          "evolution_engine.py", "config_manager.py", "watcher.py"]:
+                          "evolution_engine.py", "config_manager.py", "watcher.py",
+                          "hooks.py"]:
                 src = Path(__file__).parent.parent / fname
                 if src.exists():
                     (tmp_agent_dir / fname).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")

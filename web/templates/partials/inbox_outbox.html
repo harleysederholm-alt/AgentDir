@@ -1,0 +1,42 @@
+  <section class="card">
+    <h2>Inbox ({{ inbox_files|length }})</h2>
+    {% if inbox_files %}
+    <ul class="files">
+      {% for f in inbox_files %}
+      <li>
+        <a href="{{ f.href }}">{{ f.name }}</a>
+        <span class="muted">{{ f.mtime }} · {{ f.size }} B</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">Ei tiedostoja.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Outbox ({{ outbox_files|length }})</h2>
+    {% if outbox_files %}
+    <ul class="files">
+      {% for f in outbox_files %}
+      <li>
+        <a href="{{ f.href }}">{{ f.name }}</a>
+        <span class="muted">{{ f.mtime }} · {{ f.size }} B</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">Ei tuloksia vielä.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Tila</h2>
+    <p><span class="badge">RAG</span> {{ rag_count }} dokumenttia</p>
+    <p><span class="badge">Evoluutio</span> Tehtäviä: {{ evo.total_tasks }} · Onnistuminen: {{ "%.0f"|format(evo.success_rate * 100) }}% · {{ evo.prompt_version }}</p>
+    {% if ui_secret_set %}
+    <p class="muted">UI-suojaus: automaattipäivitys pois päältä (käytä F5).</p>
+    {% else %}
+    <p class="muted">Listat päivittyvät ~5 s välein (HTMX).</p>
+    {% endif %}
+  </section>

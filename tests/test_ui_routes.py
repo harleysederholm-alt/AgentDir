@@ -100,3 +100,32 @@ def test_ui_submit_requires_form_key_when_secret_set(tmp_path: Path, monkeypatch
         follow_redirects=False,
     )
     assert ok.status_code == 303
+
+
+def test_ui_partials_inbox_outbox(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("AGENTDIR_UI_SECRET", raising=False)
+    (tmp_path / "Inbox").mkdir(parents=True)
+    (tmp_path / "Outbox").mkdir(parents=True)
+    (tmp_path / "memory").mkdir(parents=True)
+    (tmp_path / "config.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "Inbox" / "a.txt").write_text("x", encoding="utf-8")
+
+    import shutil
+
+    src_tpl = Path(__file__).resolve().parent.parent / "web" / "templates"
+    dst_tpl = tmp_path / "web" / "templates"
+    shutil.copytree(src_tpl, dst_tpl, dirs_exist_ok=True)
+
+    import ui_routes
+
+    monkeypatch.setattr(ui_routes, "ROOT", tmp_path)
+
+    from ui_routes import register_ui
+
+    app = FastAPI()
+    register_ui(app)
+    client = TestClient(app)
+    r = client.get("/ui/partials/inbox-outbox")
+    assert r.status_code == 200
+    assert "Inbox" in r.text
+    assert "a.txt" in r.text

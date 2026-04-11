@@ -80,6 +80,7 @@ class SwarmManager:
             "llm_client.py",
             "evolution_engine.py",
             "swarm_manager.py",
+            "hooks.py",
         ]
         for fname in src_files:
             src = self.root_dir / fname

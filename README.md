@@ -134,10 +134,12 @@ agentdir/
 ├── Outbox/              ← Valmiit tulokset ilmestyvät tähän
 ├── memory/              ← RAG-vektori-DB (ei koske käsin)
 ├── swarm/               ← Lapsi-agentit (luodaan automaattisesti)
-├── plugins/             ← Omat laajennukset (.gitkeep)
+├── plugins/             ← Python-laajennukset (hooks, katso plugins/README.md)
 └── templates/           ← Valmiit roolikonfiguraatiot
     ├── researcher.json
-    └── coder.json
+    ├── coder.json
+    ├── translator.json
+    └── support.json
 ```
 
 ---
@@ -160,6 +162,8 @@ Muokkaa `config.json`:
 **Valmiit roolit** (`templates/`-kansiossa):
 - `researcher.json` – Tieteellinen tutkija
 - `coder.json` – Python-kehittäjä / data scientist
+- `translator.json` – Käännökset ja rekisteri
+- `support.json` – Käyttäjätuki / vianetsintä
 
 Käyttö: Kopioi templatesta haluamasi kentät `config.json`:iin.
 
@@ -198,9 +202,32 @@ Terveystarkistus osuu `GET http://127.0.0.1:8080/status` (A2A käynnissä `both`
 
 ## Tuotanto ja internet
 
-- Älä julkaise `server.py`:n porttia suoraan internetiin ilman **TLS:ää**, **reverse proxya** (Caddy, Traefik, nginx) ja **todennusta**. Oletus-CORS (`*`) on tarkoitettu lähiverkon / kehityksen helppouteen.
+- Älä julkaise `server.py`:n porttia suoraan internetiin ilman **TLS:ää**, **reverse proxya** (Caddy, Traefik, nginx) ja **todennusta**.
+- **`a2a.cors_origins`**: lista sallituista `Origin`-arvoista (esim. `["https://app.example.com"]`). Oletus `["*"]` on vain kehitykseen / luotettuun lähiverkkoon; CORS luetaan `config.json`:sta ja päivittyy ilman uudelleenkäynnistystä.
+- **`a2a.api_token`** (tyhjä = ei vaadi) tai ympäristömuuttuja **`AGENTDIR_API_SECRET`**: kun asetettu, `POST /task` ja `POST /rag/query` vaativat otsikon `X-AgentDir-Api-Key` tai `Authorization: Bearer <token>`.
+- **Web-UI**: ilman `AGENTDIR_UI_SECRET` dashboard päivittää Inbox/Outbox-listoja noin 5 s välein (HTMX). Suojatulla UI:lla käytä F5:ää tai laajennusta otsikon kanssa.
 - Sandbox on parannus, ei täyttä eristystä; katso [SECURITY.md](SECURITY.md) ja tunnetut rajoitukset alla.
 - `server.py` käyttää `config_manager.py`:n hot-reloadia: useimmat `config.json`-muutokset näkyvät API:ssa ja Web-UI:ssa ilman uudelleenkäynnistystä (noin 3 s viive). **Kuunneltava portti** (`a2a.port`) luetaan käynnistyksessä — portin vaihto vaatii palvelimen uudelleenkäynnistyksen.
+
+### Reverse proxy (lyhyt esimerkki)
+
+**Caddy** (automaattinen TLS, Let's Encrypt):
+
+```txt
+agentti.example.com {
+  reverse_proxy 127.0.0.1:8080
+}
+```
+
+**nginx** (TLS terminoituu proxylle):
+
+```nginx
+location / {
+  proxy_pass http://127.0.0.1:8080;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+}
+```
 
 ---
 
@@ -227,7 +254,7 @@ curl -X POST http://TOISEN_AGENTIN_IP:8080/task \
 Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa selaimessa:
 
 - **http://127.0.0.1:8080/** → uudelleenohjaus dashboardille  
-- **http://127.0.0.1:8080/ui/** → Inbox- ja Outbox-listat, RAG-/evoluutiotilanne, linkit **OpenAPI `/docs`** ja **ReDoc**  
+- **http://127.0.0.1:8080/ui/** → Inbox- ja Outbox-listat (automaattipäivitys HTMX:llä ilman UI-salasanaa), RAG-/evoluutiotilanne, linkit **OpenAPI `/docs`** ja **ReDoc**  
 - Tiedostonäkymä: klikkaa listan tiedostonimeä (vain `Inbox/` ja `Outbox/`, ei polkupakoja).
 
 **Valinnainen suojaus:** aseta ympäristömuuttuja `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin UI-sivut vaativat otsikon `X-AgentDir-Key` tai lomakkeen kentän `agentdir_key` (tehtävän lähetys selaimesta). Ilman salasanaa UI on avoin kaikille, joilla on pääsy porttiin — älä jätä näin tuotantoon.
@@ -258,6 +285,9 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 | `server.py` + Web-UI: config hot-reload | Valmis (portti vain käynnistyksessä) |
 | Tauri-työpöytä | Valmis (`desktop/`, katso `desktop/README.md`) |
 | `pip install -e .` | Valmis (`pyproject.toml`, komennot `agentdir-watcher` / `agentdir-server`) |
+| CORS + A2A API-token (`a2a.cors_origins`, `api_token` / `AGENTDIR_API_SECRET`) | Valmis |
+| Web-UI HTMX (Inbox/Outbox päivitys ilman UI-salasanaa) | Valmis |
+| Plugin-hookit (`hooks.py`, `plugins/*.py`) | Valmis |
 
 ---
 
@@ -270,7 +300,7 @@ Katso [CONTRIBUTING.md](CONTRIBUTING.md) (testit, PR-käytäntö, roadmap). Tiet
 3. Pull Request – kaikki tervetulleita
 
 Erityisesti tarvitaan:
-- Lisää template-rooleja ja kovempi tuotanto-auth (proxy + TLS) tarvittaessa
+- Lisää template-rooleja; tuotanto-auth (CORS-lista, `api_token` / `AGENTDIR_API_SECRET`, proxy + TLS) on dokumentoitu yllä
 
 ---
 

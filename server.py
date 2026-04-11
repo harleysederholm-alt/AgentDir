@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import socket
 import threading
 import time
@@ -95,20 +96,80 @@ def get_server_config() -> dict[str, Any]:
 
 
 try:
-    from fastapi import FastAPI, Request, HTTPException
-    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi import Depends, FastAPI, HTTPException, Request
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import Response
     import uvicorn
 except ImportError:
     raise RuntimeError("FastAPI puuttuu: pip install fastapi uvicorn[standard]")
 
 app = FastAPI(title="AgentDir A2A", version="1.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+def _cors_origins_list() -> list[str]:
+    raw = get_server_config().get("a2a", {}).get("cors_origins", ["*"])
+    if raw is None:
+        return ["*"]
+    if isinstance(raw, str):
+        return [raw] if raw.strip() else ["*"]
+    if isinstance(raw, list):
+        return [str(x) for x in raw if str(x).strip()] or ["*"]
+    return ["*"]
+
+
+class DynamicCORSMiddleware(BaseHTTPMiddleware):
+    """CORS config.json:sta (a2a.cors_origins), päivittyy ilman uudelleenkäynnistystä."""
+
+    async def dispatch(self, request: Request, call_next):
+        origins = _cors_origins_list()
+        origin = request.headers.get("origin") or ""
+        allow_all = "*" in origins
+        allowed_origin = "*" if allow_all else (origin if origin in origins else None)
+
+        if request.method == "OPTIONS":
+            hdrs: list[tuple[str, str]] = [
+                ("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS"),
+                (
+                    "Access-Control-Allow-Headers",
+                    request.headers.get("access-control-request-headers") or "*",
+                ),
+                ("Access-Control-Max-Age", "600"),
+            ]
+            if allowed_origin:
+                hdrs.append(("Access-Control-Allow-Origin", allowed_origin))
+            return Response(status_code=204, headers=hdrs)
+
+        response = await call_next(request)
+        if allowed_origin:
+            response.headers["Access-Control-Allow-Origin"] = allowed_origin
+        return response
+
+
+app.add_middleware(DynamicCORSMiddleware)
+
+
+def _a2a_expected_api_token() -> str:
+    env = os.environ.get("AGENTDIR_API_SECRET", "").strip()
+    if env:
+        return env
+    return (get_server_config().get("a2a", {}) or {}).get("api_token", "").strip()
+
+
+def verify_a2a_api_key(request: Request) -> None:
+    """Jos a2a.api_token tai AGENTDIR_API_SECRET on asetettu, vaadi otsikko tai Bearer."""
+    expected = _a2a_expected_api_token()
+    if not expected:
+        return
+    got = request.headers.get("X-AgentDir-Api-Key", "").strip()
+    if not got:
+        auth = request.headers.get("Authorization", "") or ""
+        if auth.lower().startswith("bearer "):
+            got = auth[7:].strip()
+    if got != expected:
+        raise HTTPException(
+            status_code=401,
+            detail="Vaaditaan X-AgentDir-Api-Key tai Authorization: Bearer (a2a.api_token / AGENTDIR_API_SECRET).",
+        )
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 
@@ -163,7 +224,7 @@ async def get_stats():
         return {"error": str(e)}
 
 
-@app.post("/task")
+@app.post("/task", dependencies=[Depends(verify_a2a_api_key)])
 async def receive_task(request: Request):
     client_ip = request.client.host if request.client else "unknown"
 
@@ -198,7 +259,7 @@ async def receive_task(request: Request):
     }
 
 
-@app.post("/rag/query")
+@app.post("/rag/query", dependencies=[Depends(verify_a2a_api_key)])
 async def rag_query(request: Request):
     try:
         data = await request.json()

@@ -52,6 +52,14 @@ from swarm_manager    import SwarmManager, should_swarm
 from evolution_engine import EvolutionEngine
 
 try:
+    import hooks
+
+    hooks.load_plugins()
+except Exception as e:
+    hooks = None  # type: ignore[assignment]
+    logger.warning("Plugin-lataus: %s", e)
+
+try:
     from watchdog.observers import Observer
     from watchdog.events    import FileSystemEventHandler
 except ImportError:
@@ -241,6 +249,12 @@ class AgentHandler(FileSystemEventHandler):
             logger.warning("Tiedosto tyhjä: %s", file_path.name)
             return
 
+        if hooks is not None:
+            try:
+                hooks.emit("after_file_parsed", path=file_path, text=content)
+            except Exception:
+                logger.exception("Hook after_file_parsed")
+
         result, success = process_with_self_correction(content, file_path.name)
 
         # Swarm?
@@ -279,6 +293,19 @@ class AgentHandler(FileSystemEventHandler):
             f"RAG: {_get_rag().count()} dok. | "
             f"Promptversio: {stats['prompt_version']}"
         )
+
+        if hooks is not None:
+            try:
+                hooks.emit(
+                    "after_task_completed",
+                    path=file_path,
+                    text=content,
+                    result=result,
+                    success=success,
+                    out_file=out_file,
+                )
+            except Exception:
+                logger.exception("Hook after_task_completed")
 
 
 # ── Käynnistys ────────────────────────────────────────────────────────────────

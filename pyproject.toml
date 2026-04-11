@@ -50,4 +50,5 @@ py-modules = [
   "evolution_engine",
   "ui_routes",
   "verify_setup",
+  "hooks",
 ]

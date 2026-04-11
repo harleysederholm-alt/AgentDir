@@ -185,6 +185,26 @@ async def ui_dashboard(request: Request):
     return _templates().TemplateResponse(request, "dashboard.html", ctx)
 
 
+@router.get(
+    "/partials/inbox-outbox",
+    response_class=HTMLResponse,
+    dependencies=[Depends(require_ui_key)],
+    include_in_schema=False,
+)
+async def ui_inbox_outbox_partial(request: Request):
+    """HTMX: Inbox-, Outbox- ja tilakortit ilman sivun täyttä uudelleenlatausta."""
+    config = _load_config()
+    ctx = {
+        "request": request,
+        "inbox_files": _list_dir("Inbox"),
+        "outbox_files": _list_dir("Outbox"),
+        "rag_count": _rag_count(config),
+        "evo": _evo_stats(config),
+        "ui_secret_set": bool(_ui_secret()),
+    }
+    return _templates().TemplateResponse(request, "partials/inbox_outbox.html", ctx)
+
+
 @router.post("/submit", include_in_schema=False)
 async def ui_submit_post(
     request: Request,
