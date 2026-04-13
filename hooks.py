@@ -4,6 +4,9 @@ Kevyt hook-järjestelmä: plugins/*.py ladataan käynnistyksessä ja voivat reki
 Tapahtumat:
   after_file_parsed(path, text)  — parsinnan jälkeen, ennen LLM:ää
   after_task_completed(path, text, result, success, out_file) — Outbox-kirjoituksen jälkeen
+  before_task_process(task_id, payload) — Ennen työnkulun/taskin suoritusta
+  on_agent_decision(task_id, decision, reasoning) — Kun agentti tekee valinnan
+  on_evolution_proposal(proposal) — Kun uusi evoluutiosääntö ehdotetaan
 """
 
 from __future__ import annotations

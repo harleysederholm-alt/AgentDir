@@ -162,6 +162,25 @@ def repl_mode(parser: argparse.ArgumentParser) -> None:
             if user_input.lower() == "status":
                 print(cmd_status())
                 continue
+            if user_input.lower() == "plugins":
+                import hooks
+                print("\n[\033[96mSOVEREIGN PLUGINS\033[0m]")
+                # Count plugins based on active listeners
+                active_hooks_count = sum(len(h) for h in hooks._hooks.values())
+                print(f" Aktiiviset Hook-tapahtumat: {active_hooks_count}")
+                
+                # Find plugin scripts loaded in memory
+                import sys
+                plugins = [m for m in sys.modules.keys() if m.startswith("agentdir_plugin_")]
+                
+                if not plugins:
+                    print(" Ei ladattuja yhteisölaajennuksia.\n Laita .py-skriptejä plugins/ -kansioon.")
+                else:
+                    for p in plugins:
+                        clean_name = p.replace("agentdir_plugin_", "")
+                        print(f"  \033[92m•\033[0m {clean_name}")
+                print()
+                continue
             if user_input.lower() == "help":
                 print("\033[96m")
                 print("  Komennot:")

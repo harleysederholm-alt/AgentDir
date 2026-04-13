@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "AgentDir",
-  "version": "1.0.0",
+  "productName": "Sovereign Engine",
+  "version": "4.0.0",
   "identifier": "com.agentdir.desktop",
   "build": {
     "beforeDevCommand": "",
@@ -17,7 +17,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "AgentDir",
+        "title": "Sovereign Engine",
         "width": 1280,
         "height": 820,
         "resizable": true,
@@ -26,6 +26,7 @@
     ]
   },
   "bundle": {
-    "active": false
+    "active": true,
+    "targets": ["msi", "nsis"]
   }
 }

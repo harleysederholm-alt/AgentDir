@@ -168,7 +168,7 @@ Sovereign Enginen modulaarinen kognitioputki on profiloitu raskaiden refaktoroin
 | v3.5 | Sovereign Engine (Evoluutio, Agent Print, Swarm) | ✅ Valmis |
 | v3.5.1 | MCP Server, OmniNode, Win Sandbox, Hermes & OpenClaw | ✅ Valmis |
 | v4.0-rc1 | Docker Hub -valmius, testikattavuus, CLI-integraatiot | ✅ Valmis |
-| v4.0 | Binäärijakelu (Tauri), yhteisölaajennukset, Plugin API | 🔜 Tulossa |
+| v4.0 | Binäärijakelu (Tauri), yhteisölaajennukset, Plugin API | ✅ Valmis |
 
 ---
 

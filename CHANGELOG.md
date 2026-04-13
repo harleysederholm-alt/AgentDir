@@ -5,13 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0-rc1] - 2026-04-13
+## [4.0.0] - 2026-04-13
 
 ### Added
 
-- **Test Suite v2** — 3 new test modules covering MCP Server, Hermes/OpenClaw workflows, and CLI REPL (`tests/test_mcp_server.py`, `tests/test_workflows.py`, `tests/test_cli_repl.py`).
-- **Docker Hub Readiness** — `Dockerfile.sovereign` updated with `HEALTHCHECK`, granular `VOLUME` mounts, `LABEL` metadata, and all v3.5.1+ modules (`workflows/`, `sandbox/`, `.prompts/`).
-- **Hermes & OpenClaw CLI Integration** — Direct REPL commands: `hermes "query"` and `openclaw "task"` bypass orchestrator and call workflow modules directly.
+- **Plugin API (Yhteisölaajennukset)** — Täysi tuki laajennuksille `plugins/` kansiossa.
+  - Uudet hookit: `before_task_process`, `on_agent_decision`, `on_evolution_proposal`, `after_file_parsed`, `after_task_completed`.
+  - Mukana tulee esimerkkiliitännäinen `plugins/example_logger.py`.
+  - CLI `plugins` komento listaa aktiiviset laajennukset.
+- **Tauri Binäärijakelu (Desktop)** — Tuotantovalmis `Sovereign Engine` GUI-paketointi.
+  - `build_release.ps1` automatisoi koko asennuspaketin rakentamisen `.exe` asennusohjelmaksi ja yhdistää backend-skriptit levitettävään muotoon.
+- **Test Suite v2** — 3 uutta testimoduulia kattamaan MCP Serverin, Hermes/OpenClaw -työnkulut ja CLI REPLin ympäristön.
+- **Docker Hub Valmius** — Tuotantovalmis `Dockerfile.sovereign` varustettuna `HEALTHCHECK`, optimoiduilla `LABEL` -tageilla ja `VOLUME` mounteilla.
 
 ### Changed
 
