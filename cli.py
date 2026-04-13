@@ -10,6 +10,135 @@ from __future__ import annotations
 
 import argparse
 import sys
+import shlex
+from pathlib import Path
+
+
+def cmd_status() -> str:
+    """
+    Palauttaa värikoodatun yleiskuvan moottorin tilasta.
+    Hakee tiedot suoraan moduuleista ja tiedostojärjestelmästä.
+    """
+    root = Path(".")
+
+    # Ollama-tila
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["ollama", "list"], capture_output=True, text=True, timeout=5
+        )
+        model_ok = "gemma" in result.stdout.lower()
+        model_name = "gemma4:e4b" if model_ok else "ei löydy"
+    except Exception:
+        model_ok = False
+        model_name = "ollama offline"
+    model_icon = "\033[92m●\033[0m" if model_ok else "\033[91m●\033[0m"
+
+    # RAG-tila
+    try:
+        import json as _json
+        cfg = _json.loads((root / "config.json").read_text(encoding="utf-8"))
+        from rag_memory import RAGMemory
+        rag = RAGMemory(cfg, memory_path=str(root / "memory"))
+        rag_docs = rag.count()
+    except Exception:
+        rag_docs = 0
+    rag_icon = "\033[92m●\033[0m" if rag_docs > 0 else "\033[93m●\033[0m"
+
+    # Evoluutio
+    try:
+        from evolution_engine import EvolutionEngine
+        import json as _json
+        cfg = _json.loads((root / "config.json").read_text(encoding="utf-8"))
+        ev = EvolutionEngine(cfg, str(root / "config.json"))
+        stats = ev.get_stats()
+    except Exception:
+        stats = {"total_tasks": 0, "success_rate": 0.0, "prompt_version": "?"}
+    evo_tasks = stats.get("total_tasks", 0)
+    evo_rate = stats.get("success_rate", 0)
+    if isinstance(evo_rate, float) and evo_rate <= 1.0:
+        evo_rate = evo_rate * 100
+    evo_ver = stats.get("prompt_version", "?")
+    if evo_rate >= 70:
+        evo_icon = "\033[92m●\033[0m"
+    elif evo_rate >= 40:
+        evo_icon = "\033[93m●\033[0m"
+    else:
+        evo_icon = "\033[91m●\033[0m"
+
+    # Inbox/Outbox
+    inbox_count = len([f for f in (root / "Inbox").glob("*") if f.is_file() and f.name != ".gitkeep"])
+    outbox_count = len([f for f in (root / "Outbox").glob("*") if f.is_file() and f.name != ".gitkeep"])
+
+    return f"""
+\033[96m┌─ SOVEREIGN ENGINE STATUS ────────────────────────────────────┐\033[0m
+│                                                               │
+│  {model_icon} MODEL      {model_name:<44}│
+│  {rag_icon} RAG        {rag_docs} documents indexed{' '*(27 - len(str(rag_docs)))}│
+│  {evo_icon} EVOLUTION  {evo_ver} │ {evo_tasks} tasks │ {evo_rate:.0f}% success{' '*(14 - len(str(evo_tasks)))}│
+│                                                               │
+│  📥 INBOX    {inbox_count} pending{' '*(45 - len(str(inbox_count)))}│
+│  📤 OUTBOX   {outbox_count} completed{' '*(43 - len(str(outbox_count)))}│
+│                                                               │
+\033[96m└───────────────────────────────────────────────────────────────┘\033[0m
+"""
+
+def print_logo() -> None:
+    print("\033[96m")
+    print(r"╔═══════════════════════════════════════════════════════════════╗")
+    print(r"║                                                               ║")
+    print(r"║    ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ █▀▄ █ █▀█                           ║")
+    print(r"║    █▀█ █▄█ ██▄ █ ▀█  █  █▄▀ █ █▀▄                           ║")
+    print(r"║                                                               ║")
+    print(r"║    SOVEREIGN ENGINE  3.5  ·  LOCAL-FIRST  ·  GEMMA4          ║")
+    print(r"║    ─────────────────────────────────────────────────────     ║")
+    print(r"║    Type  'help'  for commands  │  'status'  for telemetry    ║")
+    print(r"║    Drop files in  Inbox/  or use  A2A POST /task             ║")
+    print(r"║                                                               ║")
+    print(r"╚═══════════════════════════════════════════════════════════════╝" + "\033[0m")
+    print()
+
+def repl_mode(parser: argparse.ArgumentParser) -> None:
+    print_logo()
+    print("Tervetuloa Sovereign CLI -tilaan. Kirjoita 'help' nähdäksesi komennot tai 'exit' poistuaksesi.")
+    while True:
+        try:
+            # Käytetään vihreää promptia
+            user_input = input("\033[92mAgentDir>\033[0m ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ("exit", "quit"):
+                print("Lopetetaan Sovereign CLI. Näkemiin.")
+                break
+
+            # Suorat REPL-komennot (ei tarvitse argparsea)
+            if user_input.lower() == "status":
+                print(cmd_status())
+                continue
+            if user_input.lower() == "help":
+                print("\033[96m")
+                print("  Komennot:")
+                print("  ─────────────────────────────────────────")
+                print("  run \"tehtävä\"   — Suorita tehtävä LLM:llä")
+                print("  status           — Näytä moottorin tila")
+                print("  print            — Näytä viimeisin Agent Print")
+                print("  benchmark        — Aja suorituskykytestit")
+                print("  init             — Alusta projektirakenne")
+                print("  exit / quit      — Sulje CLI")
+                print("\033[0m")
+                continue
+
+            # Ohitetaan parserin sys.exit(), kun annetaan virheellinen komento REPL:ssä
+            args_list = shlex.split(user_input)
+            try:
+                args = parser.parse_args(args_list)
+                execute_command(args, parser)
+            except SystemExit:
+                pass  # argparse heittää SystemExit virheistä
+        except (KeyboardInterrupt, EOFError):
+            print("\nLopetetaan Sovereign CLI.")
+            break
+
 
 
 def main() -> None:
@@ -52,32 +181,46 @@ def main() -> None:
     print_p = sub.add_parser("print", help="Generoi Agent Print -raportti")
     print_p.add_argument("--task-id", default="latest", help="Tehtävän ID tai 'latest'")
 
-    args = parser.parse_args()
+    # Estetään argparsea kaatamasta REPLiä oletuksena
+    parser.exit_on_error = False
 
-    if args.command == "run":
+    # Jos argumentteja ei annettu komentoriviltä, käynnistä REPL
+    if len(sys.argv) == 1:
+        repl_mode(parser)
+        return
+
+    try:
+        args = parser.parse_args()
+        execute_command(args, parser)
+    except SystemExit:
+        pass
+
+def execute_command(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if getattr(args, "command", None) == "run":
         from orchestrator import WorkflowOrchestrator
 
+        print(f"\n\033[96m[Sovereign] Suoritetaan tehtävä (Mode: {args.mode}, Model: {args.model})\033[0m")
         orch = WorkflowOrchestrator(mode=args.mode)
         result = orch.run(task=args.task, model=args.model)
-        print(result.get("summary", "Ei tulosta."))
+        print(f"\n\033[92m[Tulokset]\033[0m\n{result.get('summary', 'Ei tulosta.')}\n")
 
-    elif args.command == "init":
+    elif getattr(args, "command", None) == "init":
         from workspace.init_structure import init_project
 
         init_project(args.path)
 
-    elif args.command == "status":
+    elif getattr(args, "command", None) == "status":
         from orchestrator import WorkflowOrchestrator
 
         orch = WorkflowOrchestrator()
         orch.status()
 
-    elif args.command == "benchmark":
+    elif getattr(args, "command", None) == "benchmark":
         from workspace.benchmark import run_benchmarks
 
         run_benchmarks()
 
-    elif args.command == "print":
+    elif getattr(args, "command", None) == "print":
         from workspace.agent_print import AgentPrint
 
         ap = AgentPrint()

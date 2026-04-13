@@ -37,24 +37,24 @@ graph TD
     classDef exe fill:#7F1D1D,stroke:#EF4444,stroke-width:2px,color:#fff
     classDef data fill:#374151,stroke:#D1D5DB,stroke-width:1px,color:#fff
 
-    subgraph User Interaction Layer
-        T[Tauri Web-UI Desktop]:::ui
+    subgraph UI["Käyttöliittymäkerros"]
+        T[Tauri Web-UI]:::ui
         CLI[Sovereign CLI REPL]:::ui
     end
 
-    subgraph Data Pipeline
-        IN[Inbox / PUDOTUS]:::data
-        OUT[Outbox / TULOS]:::data
+    subgraph PIPE["Dataputki"]
+        IN[Inbox / Syöte]:::data
+        OUT[Outbox / Tulos]:::data
     end
 
-    subgraph The Spark (AgentDir Watcher)
-        W[Hermosto: watcher.py]:::core
+    subgraph SPARK["Hermosto - AgentDir Watcher"]
+        W[watcher.py]:::core
         Evo[Evoluutiomoottori]:::core
         Swarm[Swarm Manager]:::core
     end
 
-    subgraph Cognitive & Execution Network
-        LLM[OpenClaw Gateway & Gemma 4]:::mem
+    subgraph COGNET["Kognitio ja suoritusverkko"]
+        LLM[OpenClaw Gateway + Gemma4]:::mem
         RAG[(ChromaDB RAG-Muisti)]:::mem
         AST[AST Python Sandbox]:::exe
     end
@@ -81,6 +81,8 @@ graph TD
 | **AST Sandbox** | Lokaali Eristys | Suorittaa tekoälyn kirjoittaman ohjelmistokoodin fyysisesti erotetussa virtuaalitilassa ennen vastaamista. **3x itsereflektiosykli** jos koodi kaatuu. |
 | **RAG-Muisti** | `ChromaDB` | Vektoroitu semanttinen lyhyt- ja pitkäkestoinen muisti (Embedding: `mxbai-embed-large`). |
 | **Evoluutiomoottori** | Koneoppiminen | Analysoi agentin onnistumisprosentteja (KPI) lennossa ja "evoluutioi" systeemi-promptia autonomisesti, jos tehtävien onnistumisaste laskee. |
+| **Kognitiiviset Ankkurit** | `.agentdir.md` | Kansiokohtaiset kontekstiohjeet agentille — säätelevät mitä ja miten kukin kansio prosessoidaan. |
+| **Agent Print 🖨️** | EU AI Act Art.13 | Jokainen suoritus tuottaa auditointiraportin (JSON + MD + Pro-Audit TXT) kansioon `outputs/`. SHA-256 eheys, nollaolevuus pilveen. |
 
 ---
 

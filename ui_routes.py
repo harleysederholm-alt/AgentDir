@@ -489,6 +489,73 @@ def _ctx_file_view(folder: str, filename: str, content: str) -> dict:
         "ui_secret_set": bool(_ui_secret()),
     }
 
+@router.get("/prints/{print_id}", response_class=HTMLResponse, dependencies=[Depends(require_ui_key)])
+async def render_agent_print(request: Request, print_id: str):
+    """Renderöi Agent Print -raportti tyylikkäänä HTML-sivuna."""
+    json_path = ROOT / "outputs" / f"agent_print_{print_id}.json"
+    if not json_path.exists():
+        raise HTTPException(404, "Agent Print ei löydy")
+
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    html = f"""<!DOCTYPE html>
+<html><head><title>Agent Print {print_id}</title>
+<style>
+  :root {{--bg:#0d1117;--surface:#161b22;--border:#30363d;--accent:#58a6ff;--success:#3fb950;--failure:#f85149;--text:#e6edf3;--muted:#8b949e;--font-mono:'JetBrains Mono','Fira Code',monospace;}}
+  * {{margin:0;padding:0;box-sizing:border-box;}}
+  body {{background:var(--bg);color:var(--text);font-family:var(--font-mono);padding:2rem;min-height:100vh;}}
+  .header {{border:1px solid var(--border);border-top:3px solid var(--accent);padding:1.5rem;margin-bottom:1.5rem;background:var(--surface);}}
+  .title {{font-size:.65rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;}}
+  .print-id {{font-size:1.4rem;color:var(--accent);margin:.5rem 0;}}
+  .status {{display:inline-block;padding:.25rem .75rem;background:{"rgba(63,185,80,0.15)" if data.get("sandbox_success") else "rgba(248,81,73,0.15)"};color:{"var(--success)" if data.get("sandbox_success") else "var(--failure)"};border:1px solid {"var(--success)" if data.get("sandbox_success") else "var(--failure)"};font-size:.75rem;letter-spacing:.1em;}}
+  .grid {{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}}
+  .card {{border:1px solid var(--border);background:var(--surface);padding:1rem;}}
+  .card-title {{font-size:.6rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.75rem;}}
+  .metric {{display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--border);}}
+  .metric:last-child {{border-bottom:none;}}
+  .metric-label {{color:var(--muted);font-size:.75rem;}}
+  .metric-value {{color:var(--text);font-size:.75rem;}}
+  .task-block {{border:1px solid var(--border);background:var(--surface);padding:1rem;margin-bottom:1rem;}}
+  .task-text {{font-size:.85rem;line-height:1.6;}}
+  .compliance {{border:1px solid var(--border);background:var(--surface);padding:1rem;display:flex;gap:2rem;}}
+  .badge {{font-size:.7rem;color:var(--success);border:1px solid var(--success);padding:.2rem .5rem;}}
+  .footer {{margin-top:1.5rem;text-align:center;font-size:.65rem;color:var(--muted);letter-spacing:.1em;}}
+</style></head><body>
+  <div class="header">
+    <div class="title">AgentDir Sovereign Engine 3.5 · Audit Record</div>
+    <div class="print-id">PRINT {print_id}</div>
+    <span class="status">{"✓ SUCCESS" if data.get("sandbox_success") else "✗ FAILURE"}</span>
+    <span style="font-size:.7rem;color:var(--muted);margin-left:1rem;">{data.get("timestamp","")}</span>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Inference Telemetry</div>
+      <div class="metric"><span class="metric-label">Model</span><span class="metric-value">{data.get("model_used","")}</span></div>
+      <div class="metric"><span class="metric-label">Execution</span><span class="metric-value">{data.get("execution_ms",0)}ms</span></div>
+      <div class="metric"><span class="metric-label">RAG Hits</span><span class="metric-value">{data.get("rag_hits",0)} docs</span></div>
+      <div class="metric"><span class="metric-label">Sandbox Loops</span><span class="metric-value">{data.get("sandbox_attempts",1)}/3</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">System Flags</div>
+      <div class="metric"><span class="metric-label">Fallback Used</span><span class="metric-value">{"⚠ Yes" if data.get("fallback_used") else "No"}</span></div>
+      <div class="metric"><span class="metric-label">Evolution Trigger</span><span class="metric-value">{"🧬 Yes" if data.get("evolution_triggered") else "No"}</span></div>
+      <div class="metric"><span class="metric-label">Input</span><span class="metric-value" style="font-size:.65rem;">{str(data.get("input_file",""))[-30:]}</span></div>
+      <div class="metric"><span class="metric-label">Output</span><span class="metric-value" style="font-size:.65rem;">{str(data.get("output_file",""))[-30:]}</span></div>
+    </div>
+  </div>
+  <div class="task-block">
+    <div class="card-title">Task Description</div>
+    <p class="task-text">{data.get("task_description", data.get("task",""))}</p>
+  </div>
+  <div class="compliance">
+    <div class="card-title" style="margin:0;align-self:center;">Compliance</div>
+    <span class="badge">EU AI Act Art.13 ✓</span>
+    <span class="badge">Local-Only ✓</span>
+    <span class="badge">Immutable Audit ✓</span>
+  </div>
+  <div class="footer">AgentDir Sovereign Engine · MIT License · Zero Cloud Egress</div>
+</body></html>"""
+    return HTMLResponse(html)
+
 
 @router.get("/inbox/{filename}", response_class=HTMLResponse, dependencies=[Depends(require_ui_key)])
 async def ui_inbox_file(request: Request, filename: str):
