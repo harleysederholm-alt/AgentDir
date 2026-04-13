@@ -13,7 +13,7 @@ AgentDir pyörii täysin lokaalisti sinun koneellasi. Pilveen ei lähde tavun ve
 Avaa **PowerShell** ja aja 2 komentoa:
 
 ```powershell
-git clone https://github.com/YOUR_GITHUB_USER/agentdir.git
+git clone https://github.com/harleysederholm-alt/AgentDir.git
 cd agentdir
 Set-ExecutionPolicy -Scope Process Bypass; .\install.ps1
 ```

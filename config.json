@@ -1,6 +1,6 @@
 {
   "name": "MyAgent",
-  "version": "1.0.0",
+  "version": "3.5.1-alpha",
   "role": "Älykäs tutkija ja prosessoija",
   "language": "fi",
 
@@ -56,7 +56,8 @@
     "enabled": true,
     "evaluate_every_n_tasks": 5,
     "min_tasks_before_evolve": 10,
-    "success_threshold": 0.7
+    "success_threshold": 0.7,
+    "require_approval": true
   },
 
   "a2a": {

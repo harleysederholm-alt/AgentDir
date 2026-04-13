@@ -9,7 +9,7 @@
   <h3>👉 <a href="QUICKSTART.md">Pika-aloitus (3 min)</a> 👈</h3>
 
   <p>
-    <a href="https://github.com/YOUR_GITHUB_USER/agentdir/actions/workflows/ci.yml"><img src="https://github.com/YOUR_GITHUB_USER/agentdir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+    <a href="https://github.com/harleysederholm-alt/AgentDir/actions/workflows/ci.yml"><img src="https://github.com/harleysederholm-alt/AgentDir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
     <img src="https://img.shields.io/badge/Release-v3.5.1%20Alpha-gold" alt="Version">
     <img src="https://img.shields.io/badge/AI_Engine-Gemma_4-purple" alt="Gemma4">
@@ -29,8 +29,6 @@ AgentDir Sovereign Engine ei ole vain LLM-wrapper; se on autonominen tekoäly-oh
 
 ---
 
----
-
 ## 🧠 Sovereign Architecture
 
 Engine kytkee huippuun viritetyt osajärjestelmät yhteen täydelliseksi eläväksi organismiksi:
@@ -42,10 +40,12 @@ graph TD
     classDef mem fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#fff
     classDef exe fill:#7F1D1D,stroke:#EF4444,stroke-width:2px,color:#fff
     classDef data fill:#374151,stroke:#D1D5DB,stroke-width:1px,color:#fff
+    classDef net fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#fff
 
     subgraph UI["Käyttöliittymäkerros"]
         T[Tauri Web-UI]:::ui
         CLI[Sovereign CLI REPL]:::ui
+        MCP[MCP Server]:::ui
     end
 
     subgraph PIPE["Dataputki"]
@@ -53,29 +53,45 @@ graph TD
         OUT[Outbox / Tulos]:::data
     end
 
-    subgraph SPARK["Hermosto - AgentDir Watcher"]
+    subgraph SPARK["Hermosto"]
         W[watcher.py]:::core
         Evo[Evoluutiomoottori]:::core
         Swarm[Swarm Manager]:::core
     end
 
-    subgraph COGNET["Kognitio ja suoritusverkko"]
-        LLM[OpenClaw Gateway + Gemma4]:::mem
-        RAG[(ChromaDB RAG-Muisti)]:::mem
-        AST[AST Python Sandbox]:::exe
+    subgraph COGNET["Kognitio"]
+        Hermes[Hermes Research]:::mem
+        OC[OpenClaw Deep Analysis]:::mem
+        LLM[Gemma4 / Llama3.2]:::mem
+        RAG[(ChromaDB RAG)]:::mem
+    end
+
+    subgraph EXEC["Suoritus ja turvallisuus"]
+        AST[AST Sandbox]:::exe
+        WSBOX[Windows Sandbox]:::exe
+    end
+
+    subgraph NETWORK["Hajautettu verkko"]
+        OMNI[OmniNode mDNS]:::net
     end
 
     %% Yhteydet
     T <--> |A2A REST| W
     CLI <--> |Missions| IN
+    MCP <--> |stdio/SSE| W
     IN --> |Trigger| W
     W <--> RAG
-    W --> |Prompt| LLM
-    LLM --> |Code Generation| AST
+    W --> Hermes
+    W --> OC
+    Hermes --> LLM
+    OC --> LLM
+    LLM --> |Code| AST
+    AST --> |Unsafe?| WSBOX
     AST --> |Validation Loops| LLM
     LLM --> |Final Report| OUT
     LLM --> Evo
     W --> Swarm
+    Swarm --> OMNI
 ```
 
 ### Keskeiset Komponentit
@@ -104,7 +120,7 @@ Sovereign Engine hylkää paloitellut scriptit. Kokonaisuus ajetaan ylös yhdell
 
 **1. Kloonaa ja alusta (Windows PowerShell)**
 ```powershell
-git clone https://github.com/YOUR_GITHUB_USER/agentdir.git
+git clone https://github.com/harleysederholm-alt/AgentDir.git
 cd agentdir
 Set-ExecutionPolicy -Scope Process Bypass; .\install.ps1
 ```
@@ -136,8 +152,29 @@ Sovereign Enginen modulaarinen kognitioputki on profiloitu raskaiden refaktoroin
 ## 🛡️ Sovereign Security Model
 
 **Täysi lokaali ilmaherruus.** Järjestelmä sijaitsee kokonaan käyttäjän laitteella:
-1. **Ei API-vuotoja:** Koska arkkitehtuuri luottaa yritystason lokaaliin inferenssiin (Ollama/LlamaCpp), yksikään sensitiivinen koodirivi tai dokumentti ei poistu laitteelta.
-2. **Sandbox Limits:** Suoritettavalta agenttikoodilta ([!_SOVEREIGN.md](!_SOVEREIGN.md)) on estetty pääsy vaarallisiin kirjastoihin, käyttöjärjestelmän root-tasolle tai verkko-pyyntöihin ilman eksplisiittistä mock-rajapintaa.
+1. **Zero Cloud Egress:** Kaikki inferenssi lokaalisti (Ollama). Yksikään koodirivi tai dokumentti ei poistu laitteelta.
+2. **Kaksikerroksinen Sandbox:** AST-skannaus estää vaaralliset kutsut → Windows Sandbox (.wsb) varmistaa OS-tason eristyksen.
+3. **Evoluution Guardrailit:** Agentti ei muuta omaa promptiaan ilman ihmisen hyväksyntää (`require_approval: true`).
+4. **EU AI Act Art.13:** Auto-auditointi, SHA-256 eheys, täysinäkyvyys `outputs/`-kansiossa.
+5. **Cognitive Anchors:** `.agentdir.md` -tiedostot säätelevät kansiokohtaisesti mitä agentti saa tehdä.
+
+---
+
+## 🗺️ Roadmap
+
+| Vaihe | Kuvaus | Status |
+|-------|--------|--------|
+| v3.0 | Perusarkkitehtuuri (Watcher, RAG, AST Sandbox) | ✅ Valmis |
+| v3.5 | Sovereign Engine (Evoluutio, Agent Print, Swarm) | ✅ Valmis |
+| v3.5.1 | MCP Server, OmniNode, Win Sandbox, Hermes & OpenClaw, Evoluution guardrailit | ✅ Valmis |
+| v4.0 | Docker Hub -image, binäärijakelu, yhteisölaajennukset | 🔜 Tulossa |
+
+---
+
+## 🏆 Riippumaton Arvio
+
+> *"Projekti on 9/10 vision tasolla ja 8.4/10 toteutuksen tasolla. AgentDir ei kilpaile suoraan kenenkään kanssa – se on omassa kategoriassaan."*
+> — Tekninen kriitikko-arvio, 13.4.2026
 
 ---
 

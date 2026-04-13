@@ -98,13 +98,52 @@ def print_logo() -> None:
     print(r"║    ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ █▀▄ █ █▀█                           ║")
     print(r"║    █▀█ █▄█ ██▄ █ ▀█  █  █▄▀ █ █▀▄                           ║")
     print(r"║                                                               ║")
-    print(r"║    SOVEREIGN ENGINE  3.5  ·  LOCAL-FIRST  ·  GEMMA4          ║")
+    print(r"║    SOVEREIGN ENGINE  3.5.1 ·  LOCAL-FIRST  ·  GEMMA4          ║")
     print(r"║    ─────────────────────────────────────────────────────     ║")
     print(r"║    Type  'help'  for commands  │  'status'  for telemetry    ║")
-    print(r"║    Drop files in  Inbox/  or use  A2A POST /task             ║")
+    print(r"║    'hermes'  research  │  'openclaw'  deep analysis          ║")
     print(r"║                                                               ║")
     print(r"╚═══════════════════════════════════════════════════════════════╝" + "\033[0m")
     print()
+
+
+def _get_llm_and_rag():
+    """Luo jaetut LLM- ja RAG-instanssit työnkuluille."""
+    import json
+    cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
+    from llm_client import LLMClient
+    from rag_memory import RAGMemory
+    llm = LLMClient(cfg)
+    rag = RAGMemory(cfg, memory_path="memory")
+    return llm, rag, cfg
+
+
+def _run_hermes(query: str) -> None:
+    """Aja Hermes-iteratiivinen tutkimus suoraan REPL:stä."""
+    import asyncio
+    print(f"\n\033[95m[Hermes] Aloitetaan iteratiivinen tutkimus...\033[0m")
+    try:
+        llm, rag, _ = _get_llm_and_rag()
+        from workflows.hermes import HermesWorkflow
+        wf = HermesWorkflow(llm, rag)
+        result = asyncio.run(wf.run(query, max_iterations=3))
+        print(f"\n\033[92m[Hermes] Tulos:\033[0m\n{result}\n")
+    except Exception as e:
+        print(f"\033[91m[Hermes] Virhe: {e}\033[0m\n")
+
+
+def _run_openclaw(task: str) -> None:
+    """Aja OpenClaw-syväanalyysi suoraan REPL:stä."""
+    import asyncio
+    print(f"\n\033[96m[OpenClaw] Aloitetaan monivaiheinen syväanalyysi...\033[0m")
+    try:
+        llm, rag, _ = _get_llm_and_rag()
+        from workflows.openclaw import OpenClawWorkflow
+        wf = OpenClawWorkflow(llm, rag)
+        result = asyncio.run(wf.run(task))
+        print(f"\n\033[92m[OpenClaw] Tulos:\033[0m\n{result}\n")
+    except Exception as e:
+        print(f"\033[91m[OpenClaw] Virhe: {e}\033[0m\n")
 
 def repl_mode(parser: argparse.ArgumentParser) -> None:
     print_logo()
@@ -127,13 +166,33 @@ def repl_mode(parser: argparse.ArgumentParser) -> None:
                 print("\033[96m")
                 print("  Komennot:")
                 print("  ─────────────────────────────────────────")
-                print("  run \"tehtävä\"   — Suorita tehtävä LLM:llä")
+                print('  run "tehtävä"    — Suorita tehtävä LLM:llä')
+                print('  hermes "kysymys" — Iteratiivinen tutkimus (Hermes)')
+                print('  openclaw "task"  — Syväanalyysi (OpenClaw)')
                 print("  status           — Näytä moottorin tila")
                 print("  print            — Näytä viimeisin Agent Print")
                 print("  benchmark        — Aja suorituskykytestit")
                 print("  init             — Alusta projektirakenne")
                 print("  exit / quit      — Sulje CLI")
                 print("\033[0m")
+                continue
+
+            # Hermes: iteratiivinen tutkimus
+            if user_input.lower().startswith("hermes "):
+                query = user_input[7:].strip().strip('"')
+                if query:
+                    _run_hermes(query)
+                else:
+                    print("Käyttö: hermes \"tutkimuskysymys\"")
+                continue
+
+            # OpenClaw: syväanalyysi
+            if user_input.lower().startswith("openclaw "):
+                task = user_input[9:].strip().strip('"')
+                if task:
+                    _run_openclaw(task)
+                else:
+                    print('Käyttö: openclaw "analyysitehtävä"')
                 continue
 
             # Ohitetaan parserin sys.exit(), kun annetaan virheellinen komento REPL:ssä
