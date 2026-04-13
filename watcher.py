@@ -203,28 +203,20 @@ def _ignore_inbox_filename(name: str) -> bool:
 
 # ── Apufunktiot ───────────────────────────────────────────────────────────────
 
+from prompt_manager import PromptManager
+
+_prompt_manager = PromptManager()
+
 def build_prompt(content: str, context: str, role: str | None = None) -> str:
-    template = cfg.get("prompt_templates.default", "")
     r = role if role is not None else cfg.get("role", "Älykäs avustaja")
-    if not template:
-        template = "Olet {role}.\n\nKonteksti:\n{context}\n\nTehtävä:\n{content}"
-    return template.format(
-        role=r,
-        context=context or "Ei aiempaa kontekstia.",
-        content=content,
-    )
+    inp = f"KONTEKSTI:\n{context or 'Ei aiempaa kontekstia.'}\n\nSYÖTE:\n{content}"
+    return _prompt_manager.get_prompt(r, "Tee tehtävä syötteen ja kontekstin pohjalta.", inp)
 
 
 def build_code_prompt(content: str, context: str, role: str | None = None) -> str:
-    template = cfg.get("prompt_templates.code", "")
     r = role if role is not None else cfg.get("role", "Koodari")
-    if not template:
-        return build_prompt(content, context, role=r)
-    return template.format(
-        role=r,
-        context=context or "",
-        content=content,
-    )
+    inp = f"KONTEKSTI:\n{context or ''}\n\nSYÖTE:\n{content}"
+    return _prompt_manager.get_prompt("koodari", "Kirjoita koodia tehtävän ratkaisemiseksi. Vastaa pelkällä koodilla.", inp)
 
 
 def needs_code(content: str) -> bool:

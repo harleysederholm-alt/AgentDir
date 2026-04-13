@@ -1,0 +1,13 @@
+{
+  "agent_print_id": "ea9ff585",
+  "timestamp": "2026-04-13T12:12:11.610119",
+  "task": "Etsi auth_service.py-tiedostosta kaikki aikaleimalogiikat...",
+  "mode": "openclaw",
+  "model_used": "ollama/gemma4:e4b",
+  "success": false,
+  "token_savings_pct": 0,
+  "sandbox_verified": true,
+  "causal_log": "wiki/log.md",
+  "eu_ai_act_article13": true,
+  "output_hash": -8683776161570140957
+}

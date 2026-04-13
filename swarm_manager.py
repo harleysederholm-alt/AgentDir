@@ -42,9 +42,9 @@ class SwarmManager:
         # Lapsikansioiden määrä tässä sessiossa (active_children on vain subprocesseille)
         self._spawned_children = 0
 
-    def spawn_child(self, task: str, child_role: str, parent_file: str) -> Path | None:
+    def spawn_child(self, task: str, child_role: str, parent_file: str, model: str | None = None) -> Path | None:
         """
-        Luo uuden lapsi-agenttikansion swarm/-hakemistoon.
+        Luo uuden lapsi-agenttikansion swarm/-hakemistoon ja käynnistää sen.
         TÄRKEÄÄ: Ei koskaan Inbox/sisään → estää loopen.
         """
         if self._spawned_children >= self.max_children:
@@ -59,11 +59,14 @@ class SwarmManager:
         (child_dir / "Inbox").mkdir(parents=True, exist_ok=True)
         (child_dir / "Outbox").mkdir(exist_ok=True)
         (child_dir / "memory").mkdir(exist_ok=True)
+        (child_dir / ".prompts").mkdir(exist_ok=True)
 
-        # Luo lapsen config (perii vanhemmalta, mutta eri rooli)
+        # Luo lapsen config (perii vanhemmalta, mutta eri rooli/malli)
         child_config = dict(self.config)
         child_config["name"] = child_name
         child_config["role"] = child_role
+        if model:
+            child_config.setdefault("llm", {})["model"] = model
         child_config["swarm"]["enabled"] = False  # lapset eivät luo lapsia
         (child_dir / "config.json").write_text(
             json.dumps(child_config, indent=2, ensure_ascii=False),
@@ -83,6 +86,9 @@ class SwarmManager:
             "evolution_engine.py",
             "swarm_manager.py",
             "hooks.py",
+            "server.py", 
+            "prompt_manager.py",
+            "agent_print.py"
         ]
         for fname in src_files:
             src = self.root_dir / fname
@@ -90,6 +96,14 @@ class SwarmManager:
                 (child_dir / fname).write_text(
                     src.read_text(encoding="utf-8"),
                     encoding="utf-8",
+                )
+
+        prompts_dir = self.root_dir / ".prompts"
+        if prompts_dir.exists():
+            for pfile in prompts_dir.glob("*.md"):
+                (child_dir / ".prompts" / pfile.name).write_text(
+                    pfile.read_text(encoding="utf-8"),
+                    encoding="utf-8"
                 )
 
         manifest = self.root_dir / "manifest.json"
@@ -106,8 +120,16 @@ class SwarmManager:
             encoding="utf-8",
         )
 
+        # Käynnistä lapsi subprocessilla
+        try:
+            cmd = [sys.executable, "watcher.py"]
+            proc = subprocess.Popen(cmd, cwd=child_dir)
+            self.active_children.append(proc)
+            logger.info("🚀 Swarm: Lapsi-agentti %s käynnistetty (PID: %d)", child_name, proc.pid)
+        except Exception as e:
+            logger.error("Swarm: Lapsen käynnistys epäonnistui: %s", e)
+
         self._spawned_children += 1
-        logger.info("🚀 Swarm: Lapsi-agentti luotu → %s", child_dir)
         return child_dir
 
     def cleanup_finished(self):

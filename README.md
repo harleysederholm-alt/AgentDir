@@ -78,11 +78,13 @@ graph TD
 |---------|-------------|---------|
 | **Hermosto (Watcher)** | `watchdog` + `asyncio` | Reagoi `Inbox/` -kansioon ilmestyviin syötteisiin < 50ms latenssilla. Osaa käsitellä massiivisia rinnakkaisia tietuetaakkoja. |
 | **Kognitio (LLM Gateway)**| `llm_client.py` | Live-rajapinta OpenAI-yhteensopiviin lokaaleihin malleihin. Ohjaa `Ollaman` Gemma 4:4b -ajot ja putoaa pehmeästi Llama 3.2:3b varamalliin OOM-tilanteissa. |
-| **AST Sandbox** | Lokaali Eristys | Suorittaa tekoälyn kirjoittaman ohjelmistokoodin fyysisesti erotetussa virtuaalitilassa ennen vastaamista. **3x itsereflektiosykli** jos koodi kaatuu. |
+| **AST & Win Sandbox** | Lokaali Eristys | Kaksikerroksinen suojaus: AST-skannaus ja Microsoft Windows Sandbox (.wsb) estämään vaaralliset ajot isäntäkäyttöjärjestelmässä täysin irrotetusti. |
 | **RAG-Muisti** | `ChromaDB` | Vektoroitu semanttinen lyhyt- ja pitkäkestoinen muisti (Embedding: `mxbai-embed-large`). |
-| **Evoluutiomoottori** | Koneoppiminen | Analysoi agentin onnistumisprosentteja (KPI) lennossa ja "evoluutioi" systeemi-promptia autonomisesti, jos tehtävien onnistumisaste laskee. |
-| **Kognitiiviset Ankkurit** | `.agentdir.md` | Kansiokohtaiset kontekstiohjeet agentille — säätelevät mitä ja miten kukin kansio prosessoidaan. |
-| **Agent Print 🖨️** | EU AI Act Art.13 | Jokainen suoritus tuottaa auditointiraportin (JSON + MD + Pro-Audit TXT) kansioon `outputs/`. SHA-256 eheys, nollaolevuus pilveen. |
+| **Hermes & OpenClaw** | Työnkulut | Vahvasti asynkroniset kognitiotyönkulut tauottomaan iteratiiviseen tutkimukseen ja syväpäättelyyn monimutkaisille RAG-operaatioille. |
+| **OmniNode** | NPU Sharding | Jakaa hajautetut raskaat Llama/Gemma-päättelyt muiden lähiverkkolaitteiden kanssa mDNS-protokollaa hyödyntäen. |
+| **MCP Server** | `.mcp` | Stdio/SSE-yhteensopiva palvelin rajapintana muille AI-kehitystyökaluille (esim. Claude/Cursor) hakea tuloksia ja hyödyntää sandboxia. |
+| **Evoluutiomoottori** | Koneoppiminen | Analysoi agentin onnistumisprosentteja (KPI) lennossa ja "evoluutioi" systeemi-promptia autonomisesti. |
+| **Agent Print 🖨️** | EU AI Act Art.13 | Jokainen suoritus tuottaa auditointiraportin (JSON, MD, Pro-Audit TXT) kansioon `outputs/`. SHA-256 eheys. |
 
 ---
 

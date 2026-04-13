@@ -376,6 +376,14 @@ except Exception as e:
     logger.warning("Web-UI ei käynnistynyt: %s", e)
 
 
+try:
+    from mcp_server import mcp_router
+    app.include_router(mcp_router)
+    logger.info("MCP-palvelin käynnistetty ja integroitu väylään.")
+except Exception as e:
+    logger.warning("MCP server ei käynnistynyt: %s", e)
+
+
 # ── Käynnistys ────────────────────────────────────────────────────────────────
 
 

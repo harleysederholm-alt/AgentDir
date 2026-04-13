@@ -1,0 +1,29 @@
+"""
+OpenClaw - Syväanalyyttinen, monivaiheinen päättelytila raskaille RAG-hauille.
+Käytetään kun perinteinen 1-shot (watcher.py) ei riitä monimutkaisissa tehtävissä.
+"""
+
+import asyncio
+import logging
+
+logger = logging.getLogger("agentdir.workflows.openclaw")
+
+class OpenClawWorkflow:
+    def __init__(self, llm_client, rag_memory):
+        self.llm = llm_client
+        self.rag = rag_memory
+        
+    async def run(self, task: str) -> str:
+        logger.info("[OpenClaw] Aloitetaan monivaiheinen analyysi")
+        
+        # Vaihe 1: Ongelman dekoodaus
+        decode_prompt = f"Hajota seuraava tehtävä {task} loogisiin osiin. Mitä tietoa tarvitsemme RAG-kannasta?"
+        decode_res = await self.llm.process_task(decode_prompt, "Analyytikko")
+        
+        # Vaihe 2: Syvähaku (multiple RAG queries based on decode)
+        context = self.rag.query(decode_res, n_results=5)
+        
+        # Vaihe 3: Synteesi
+        syn_prompt = f"Tehtävä: {task}\n\nRAG Konteksti:\n{context}\n\nOhjeet: Luo kattava loppuraportti hyödyntäen yllä olevia tietoja. Käytä loogista ja armotonta päättelyä."
+        final_res = await self.llm.process_task(syn_prompt, "Erikoisanalyytikko")
+        return final_res

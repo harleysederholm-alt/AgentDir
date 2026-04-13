@@ -1,0 +1,13 @@
+{
+  "agent_print_id": "77557ce0",
+  "timestamp": "2026-04-13T11:19:33.470772",
+  "task": "Hei Gemma, testaa OmniNode-verkkoa ja palauta 'Järjestelmä on aktiivinen'.",
+  "mode": "openclaw",
+  "model_used": "ollama/gemma4:e4b",
+  "success": false,
+  "token_savings_pct": 0,
+  "sandbox_verified": true,
+  "causal_log": "wiki/log.md",
+  "eu_ai_act_article13": true,
+  "output_hash": 4303193573423703260
+}

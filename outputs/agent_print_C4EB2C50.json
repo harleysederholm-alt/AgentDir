@@ -1,0 +1,15 @@
+{
+  "print_id": "C4EB2C50",
+  "timestamp": "2026-04-13T13:05:55.163258+00:00",
+  "task_description": "Analysoi tiedostot !_SOVEREIGN.md ja SOVEREIGN_DASHBOARD.md. Tee niistä kognitiivinen auditointi: toteutuuko projektin eettinen visio nykytilassa? Ehdota yhtä radikaalia parannusta agentin autonomian ",
+  "model_used": "ollama/gemma2",
+  "fallback_used": false,
+  "rag_hits": 0,
+  "sandbox_attempts": 1,
+  "sandbox_success": true,
+  "evolution_triggered": false,
+  "input_file": "",
+  "output_file": "",
+  "execution_ms": 0,
+  "eu_ai_act_compliant": true
+}
