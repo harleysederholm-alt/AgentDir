@@ -61,8 +61,8 @@ class TestMCPToolCall:
         })
         assert resp.status_code == 404
 
-    @patch("mcp_server.RAGMemory")
-    @patch("mcp_server.get_server_config")
+    @patch("rag_memory.RAGMemory")
+    @patch("server.get_server_config")
     def test_rag_search_returns_content(self, mock_config, mock_rag_cls):
         mock_rag = MagicMock()
         mock_rag.query.return_value = "test RAG result"
@@ -79,7 +79,7 @@ class TestMCPToolCall:
         assert data["isError"] is False
         assert len(data["content"]) > 0
 
-    @patch("mcp_server.sandbox_exec")
+    @patch("sandbox_executor.execute")
     def test_sandbox_success(self, mock_exec):
         mock_exec.return_value = {"success": True, "output": "42"}
 
@@ -92,7 +92,7 @@ class TestMCPToolCall:
         data = resp.json()
         assert data["isError"] is False
 
-    @patch("mcp_server.sandbox_exec")
+    @patch("sandbox_executor.execute")
     def test_sandbox_failure_returns_error(self, mock_exec):
         mock_exec.return_value = {"success": False, "error": "SyntaxError"}
 
