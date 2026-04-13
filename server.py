@@ -106,15 +106,32 @@ except ImportError:
 app = FastAPI(title="AgentDir A2A", version="1.0.0")
 
 
+def _a2a_expected_api_token() -> str:
+    env = os.environ.get("AGENTDIR_API_SECRET", "").strip()
+    if env:
+        return env
+    return (get_server_config().get("a2a", {}) or {}).get("api_token", "").strip()
+
+
 def _cors_origins_list() -> list[str]:
+    """Lue a2a.cors_origins. API-tokenin kanssa '*' ei ole sallittu (tyhjä lista + varoitus)."""
     raw = get_server_config().get("a2a", {}).get("cors_origins", ["*"])
     if raw is None:
-        return ["*"]
-    if isinstance(raw, str):
-        return [raw] if raw.strip() else ["*"]
-    if isinstance(raw, list):
-        return [str(x) for x in raw if str(x).strip()] or ["*"]
-    return ["*"]
+        origins = ["*"]
+    elif isinstance(raw, str):
+        origins = [raw] if raw.strip() else ["*"]
+    elif isinstance(raw, list):
+        origins = [str(x) for x in raw if str(x).strip()] or ["*"]
+    else:
+        origins = ["*"]
+
+    if _a2a_expected_api_token() and any(str(o).strip() == "*" for o in origins):
+        logger.warning(
+            "A2A API -token on käytössä — a2a.cors_origins ei saa sisältää '*'. "
+            "CORS poistettu kunnes lista on eksplisiittinen (esim. [\"https://app.example\"])."
+        )
+        return []
+    return origins
 
 
 class DynamicCORSMiddleware(BaseHTTPMiddleware):
@@ -146,13 +163,6 @@ class DynamicCORSMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(DynamicCORSMiddleware)
-
-
-def _a2a_expected_api_token() -> str:
-    env = os.environ.get("AGENTDIR_API_SECRET", "").strip()
-    if env:
-        return env
-    return (get_server_config().get("a2a", {}) or {}).get("api_token", "").strip()
 
 
 def verify_a2a_api_key(request: Request) -> None:
@@ -193,6 +203,7 @@ def check_rate_limit(client_ip: str) -> bool:
 
 @app.get("/status")
 async def status():
+    """Julkinen valmiustarkistus (ei API-avainta) — Docker healthcheck ja monitorointi."""
     cfg = get_server_config()
     return {
         "name": cfg.get("name"),

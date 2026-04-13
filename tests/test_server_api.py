@@ -90,3 +90,34 @@ def test_cors_acao_on_get_status(server_app):
     r = client.get("/status", headers={"Origin": "http://localhost:5173"})
     assert r.status_code == 200
     assert r.headers.get("access-control-allow-origin") in ("*", "http://localhost:5173")
+
+
+def test_cors_wildcard_disabled_when_api_secret_set(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """API-token + cors_origins ['*'] → ei Access-Control-Allow-Origin (GET /status säilyy 200)."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AGENTDIR_API_SECRET", "tok")
+    cfg = _minimal_config()
+    cfg["a2a"]["cors_origins"] = ["*"]
+    _write_layout(tmp_path, cfg)
+    sys.modules.pop("server", None)
+    import server  # noqa: PLC0415
+
+    client = TestClient(server.app)
+    r = client.get("/status", headers={"Origin": "https://any.example"})
+    assert r.status_code == 200
+    assert r.headers.get("access-control-allow-origin") is None
+
+
+def test_cors_explicit_origin_with_api_secret(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AGENTDIR_API_SECRET", "tok2")
+    cfg = _minimal_config()
+    cfg["a2a"]["cors_origins"] = ["https://allowed.app"]
+    _write_layout(tmp_path, cfg)
+    sys.modules.pop("server", None)
+    import server  # noqa: PLC0415
+
+    client = TestClient(server.app)
+    r = client.get("/status", headers={"Origin": "https://allowed.app"})
+    assert r.status_code == 200
+    assert r.headers.get("access-control-allow-origin") == "https://allowed.app"

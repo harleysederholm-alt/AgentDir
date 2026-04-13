@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ folder }} / {{ filename }}{% endblock %}
+{% block nav_extra %}
+{% if ui_secret_set %}
+<form action="/ui/logout" method="post" class="nav-logout">
+  <button type="submit">Kirjaudu ulos</button>
+</form>
+{% endif %}
+{% endblock %}
 {% block main %}
 <p><a href="/">← Etusivu</a></p>
 <h2 style="margin-top:0;">{{ folder }} / {{ filename }}</h2>

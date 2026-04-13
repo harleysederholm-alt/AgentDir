@@ -1,0 +1,15 @@
+# Turvallisempi overlay: lataa salaisuudet .env.secure-tiedostosta.
+#
+#   cp .env.secure.example .env.secure
+#   # muokkaa .env.secure
+#   docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build
+#
+# Rajaa CORS ja A2A-token config.json:ssa (a2a.cors_origins, a2a.api_token) ennen tuotantoa.
+#
+# GET /status pysyy ilman API-avainta (Docker healthcheck). Kun AGENTDIR_API_SECRET tai
+# a2a.api_token on käytössä, palvelin ei hyväksy a2a.cors_origins:ssa '*' — aseta eksplisiittiset originat.
+
+services:
+  agentdir:
+    env_file:
+      - .env.secure

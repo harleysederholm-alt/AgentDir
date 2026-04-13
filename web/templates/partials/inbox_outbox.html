@@ -34,9 +34,5 @@
     <h2>Tila</h2>
     <p><span class="badge">RAG</span> {{ rag_count }} dokumenttia</p>
     <p><span class="badge">Evoluutio</span> Tehtäviä: {{ evo.total_tasks }} · Onnistuminen: {{ "%.0f"|format(evo.success_rate * 100) }}% · {{ evo.prompt_version }}</p>
-    {% if ui_secret_set %}
-    <p class="muted">UI-suojaus: automaattipäivitys pois päältä (käytä F5).</p>
-    {% else %}
-    <p class="muted">Listat päivittyvät ~5 s välein (HTMX).</p>
-    {% endif %}
+    <p class="muted">Listat päivittyvät ~5 s välein (HTMX; istunto säilyy evästeessä).</p>
   </section>

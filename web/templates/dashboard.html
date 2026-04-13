@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 {% block title %}AgentDir – {{ agent_name }}{% endblock %}
+{% block nav_extra %}
+{% if ui_secret_set %}
+<form action="/ui/logout" method="post" class="nav-logout">
+  <button type="submit">Kirjaudu ulos</button>
+</form>
+{% endif %}
+{% endblock %}
 {% block main %}
 <p style="color: var(--muted); margin-top: 0;">Watcher lukee <strong>Inbox/</strong> ja kirjoittaa <strong>Outbox/</strong>. Voit pudottaa tiedoston, kirjoittaa tehtävän alla tai käyttää A2A <code>POST /task</code>.</p>
 
@@ -12,14 +19,14 @@
       <label for="ui-file">Tai tiedosto</label>
       <input id="ui-file" type="file" name="file" />
       {% if ui_secret_set %}
-      <label for="ui-key">UI-salasana (<code>AGENTDIR_UI_SECRET</code>)</label>
+      <p class="muted">Kirjautuneena lomake ei vaadi <code>agentdir_key</code>-kenttää. Voit lisätä sen silti (esim. skripteille).</p>
+      <label for="ui-key">Valinnainen: <code>AGENTDIR_UI_SECRET</code> kenttänä</label>
       <input id="ui-key" type="password" name="agentdir_key" autocomplete="off" />
       {% endif %}
       <button type="submit">Lähetä Inboxiin</button>
     </form>
   </section>
 
-  {% if not ui_secret_set %}
   <div
     id="live-panels"
     class="grid"
@@ -30,16 +37,9 @@
   >
     {% include "partials/inbox_outbox.html" %}
   </div>
-  {% else %}
-  <div class="grid" style="grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
-    {% include "partials/inbox_outbox.html" %}
-  </div>
-  {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-{% if not ui_secret_set %}
 <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" crossorigin="anonymous"></script>
-{% endif %}
 {% endblock %}

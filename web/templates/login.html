@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Kirjaudu – AgentDir{% endblock %}
+{% block main %}
+<section class="card" style="max-width: 28rem;">
+  <h2 style="margin-top: 0;">Web-UI kirjautuminen</h2>
+  <p class="muted">Sama salasana kuin ympäristömuuttuja <code>AGENTDIR_UI_SECRET</code>.</p>
+  {% if login_error %}
+  <p style="color: #f85149;">Virheellinen salasana.</p>
+  {% endif %}
+  <form method="post" action="/ui/login" class="stack">
+    <input type="hidden" name="next" value="{{ next }}" />
+    <label for="pw">Salasana</label>
+    <input id="pw" type="password" name="password" autocomplete="current-password" required />
+    <button type="submit">Kirjaudu</button>
+  </form>
+</section>
+{% endblock %}

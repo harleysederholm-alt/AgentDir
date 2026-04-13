@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.secure
 
 # AgentDir runtime-data (ei versionhallintaan)
 memory/chroma/

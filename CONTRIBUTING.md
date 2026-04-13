@@ -4,7 +4,7 @@ Thank you for your interest in improving AgentDir.
 
 ## Development setup
 
-- Python **3.10 or newer** (3.11+ recommended for local development).
+- Python **3.10 or newer** (3.11+ recommended; CI ajaa 3.11, 3.12 ja 3.13).
 - Create a virtual environment and install dependencies:
 
   ```bash
@@ -42,6 +42,11 @@ All tests should pass before you open a pull request.
 - Update documentation if you change behaviour that users rely on (README, Docker, or config keys).
 - Do not commit runtime data (`memory/`, `Inbox/` contents, `Outbox/` contents, `swarm/`); these are ignored by `.gitignore` except `.gitkeep` placeholders.
 
+## Releases and versioning
+
+- Version is defined in [`pyproject.toml`](pyproject.toml) (`[project].version`) and should follow **Semantic Versioning** (MAJOR.MINOR.PATCH).
+- Record user-visible changes in [`CHANGELOG.md`](CHANGELOG.md) under `[Unreleased]` during development; at release time, rename that section to the new version and date, then tag the repository (for example `git tag v1.2.0 && git push origin v1.2.0`).
+
 ## Code style
 
 - Match the style of existing modules (typing, logging, Finnish user-facing strings where already used).
@@ -53,7 +58,7 @@ See [README.md](README.md) for architecture, configuration, and Docker usage.
 
 ## Roadmap (Phase 2)
 
-Shipped: **Web-UI** (`/ui/`), Inbox/Outbox + file view, **tehtävän lähetys** lomakkeella, **HTMX**-päivitys listoille (kun `AGENTDIR_UI_SECRET` ei ole käytössä), OpenAPI-linkit; valinnainen `AGENTDIR_UI_SECRET` + `X-AgentDir-Key` / lomake `agentdir_key`.
+Shipped: **Web-UI** (`/ui/`), Inbox/Outbox + file view, **tehtävän lähetys** lomakkeella, **HTMX**-päivitys listoille, OpenAPI-linkit; valinnainen `AGENTDIR_UI_SECRET` + **`/ui/login`**-istunto (`agentdir_session`) tai `X-AgentDir-Key` / lomake `agentdir_key`; istunnon allekirjoitus: `AGENTDIR_SESSION_SECRET` tai `config.json` → `ui.session_secret`.
 
 Shipped: **A2A**-kovennus: `a2a.cors_origins`, `a2a.api_token` / `AGENTDIR_API_SECRET` (`POST /task`, `POST /rag/query`).
 
@@ -61,7 +66,6 @@ Shipped: **plugins** (`plugins/*.py`) + `hooks`-tapahtumat (katso `plugins/READM
 
 Follow-up ideas:
 
-- Session-pohjainen Web-UI-auth (HTMX + salainen UI samaan aikaan).
-- Tiukempi CORS + API-token -tarina Docker / Compose -esimerkeissä.
+- OAuth2 / käyttäjätilit internetiin; täysi lomake-CSRF; usean instanssin jaettu rate limit (Redis tms.).
 
 Open an issue before large UI changes so we can align on scope.

@@ -76,6 +76,8 @@
   },
 
   "ui": {
-    "max_upload_mb": 10
+    "max_upload_mb": 10,
+    "session_secret": "",
+    "cookie_secure": false
   }
 }

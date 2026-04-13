@@ -78,6 +78,8 @@ class SwarmManager:
             "sandbox_executor.py",
             "file_parser.py",
             "llm_client.py",
+            "agent_core.py",
+            "evolution_log.py",
             "evolution_engine.py",
             "swarm_manager.py",
             "hooks.py",

@@ -1,22 +1,33 @@
 """
 AgentDir – kevyt web-UI (FastAPI + Jinja2).
 Listaa Inbox/Outbox, näyttää tiedoston sisällön turvallisella polulla.
-Valinnainen: ympäristömuuttuja AGENTDIR_UI_SECRET + otsikko X-AgentDir-Key
-(tai POST-lomakkeessa kenttä agentdir_key).
+
+Tuotantokovennukset (istunto / HTMX):
+- AGENTDIR_UI_SECRET päällä: GET + HX-Request ilman tunnistusta → 401 ja HX-Redirect
+  /ui/login?next=… (HTMX-partial ei jää rikki).
+- SessionMiddleware: https_only kun AGENTDIR_UI_COOKIE_SECURE=1 tai ui.cookie_secure.
+- Onnistunut POST /ui/login: session.clear() ennen ui_ok (session fixation -torjunta).
+
+Epäonnistuneet kirjautumiset: enintään UI_LOGIN_FAIL_MAX yritystä / IP /
+UI_LOGIN_FAIL_WINDOW_SEC (in-memory; ei jaeta prosessien välillä).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import re
+import secrets
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 from urllib.parse import quote, unquote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,8 +38,15 @@ ROOT = Path(__file__).resolve().parent
 WEB_DIR = ROOT / "web"
 
 ALLOWED_FOLDERS = frozenset({"Inbox", "Outbox"})
+SESSION_UI_OK = "ui_ok"
+
+# Epäonnistuneet POST /ui/login -yritykset per IP (in-memory; ei jaeta instanssien välillä).
+UI_LOGIN_FAIL_WINDOW_SEC = 600.0  # 10 min
+UI_LOGIN_FAIL_MAX = 5
 
 _config_getter: Callable[[], dict] | None = None
+_login_fail_lock = threading.Lock()
+_login_fail_times: dict[str, list[float]] = {}
 
 
 def set_ui_config_getter(fn: Callable[[], dict]) -> None:
@@ -41,29 +59,171 @@ def _ui_secret() -> str:
     return os.environ.get("AGENTDIR_UI_SECRET", "").strip()
 
 
-async def require_ui_key(request: Request) -> None:
-    secret = _ui_secret()
-    if not secret:
+def _session_middleware_secret() -> str:
+    """Istuntoevästeen allekirjoitus (vähintään 16 merkkiä)."""
+    env = os.environ.get("AGENTDIR_SESSION_SECRET", "").strip()
+    if len(env) >= 16:
+        return env
+    ui = _ui_secret()
+    if ui:
+        return hashlib.sha256(b"agentdir.session:" + ui.encode("utf-8")).hexdigest()
+    try:
+        if _config_getter:
+            cfg = _config_getter()
+            s = (cfg.get("ui", {}) or {}).get("session_secret", "")
+            if isinstance(s, str) and len(s.strip()) >= 16:
+                return s.strip()
+    except Exception:
+        pass
+    return hashlib.sha256(b"agentdir.dev.session.key").hexdigest()
+
+
+def _session_cookie_https_only() -> bool:
+    """True → Starlette SessionMiddleware(https_only=True), eväste Secure.
+
+    AGENTDIR_UI_COOKIE_SECURE=1 tai config ui.cookie_secure kun UI käytössä HTTPS:llä.
+    """
+    v = os.environ.get("AGENTDIR_UI_COOKIE_SECURE", "").strip().lower()
+    if v in ("1", "true", "yes", "on"):
+        return True
+    try:
+        if _config_getter:
+            cfg = _config_getter()
+            sec = (cfg.get("ui", {}) or {}).get("cookie_secure")
+            if sec is True:
+                return True
+            if isinstance(sec, str) and sec.strip().lower() in ("1", "true", "yes", "on"):
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _client_ip(request: Request) -> str:
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
+def _login_next_query(request: Request) -> str:
+    """URL-koodattu polku+query loginin next=-parametriin."""
+    raw = str(request.url.path) or "/ui/"
+    if request.url.query:
+        raw += "?" + str(request.url.query)
+    return quote(raw, safe="")
+
+
+def _hx_redirect_login_url(request: Request) -> str:
+    """HTMX 401:n HX-Redirect-URL (paluu polulle kirjautumisen jälkeen)."""
+    return f"/ui/login?next={_login_next_query(request)}"
+
+
+def _log_ui_401(request: Request, reason: str) -> None:
+    """Lokita Web-UI 401 (ei salasanoja, ei otsikkosisältöjä)."""
+    logger.warning(
+        "Web-UI 401 %s %s ip=%s (%s)",
+        request.method,
+        request.url.path,
+        _client_ip(request),
+        reason,
+    )
+
+
+def _login_rate_check_or_raise(request: Request) -> None:
+    if not _ui_secret():
         return
-    if request.headers.get("X-AgentDir-Key", "") != secret:
-        raise HTTPException(
-            status_code=401,
-            detail="Aseta otsikko X-AgentDir-Key samaan arvoon kuin AGENTDIR_UI_SECRET.",
-        )
+    ip = _client_ip(request)
+    now = time.monotonic()
+    with _login_fail_lock:
+        seq = _login_fail_times.setdefault(ip, [])
+        seq[:] = [t for t in seq if now - t < UI_LOGIN_FAIL_WINDOW_SEC]
+        if len(seq) >= UI_LOGIN_FAIL_MAX:
+            logger.warning("Web-UI login rate limited ip=%s", ip)
+            raise HTTPException(
+                status_code=429,
+                detail="Liikaa epäonnistuneita kirjautumisyrityksiä. Odota ja yritä uudelleen.",
+            )
 
 
-def _verify_ui_access(request: Request, form_key: str = "") -> None:
-    """Sama kuin require_ui_key; POST-lomakkeelle voi antaa salasanan kentässä agentdir_key."""
+def _login_record_failure(request: Request) -> None:
+    ip = _client_ip(request)
+    now = time.monotonic()
+    with _login_fail_lock:
+        seq = _login_fail_times.setdefault(ip, [])
+        seq[:] = [t for t in seq if now - t < UI_LOGIN_FAIL_WINDOW_SEC]
+        seq.append(now)
+    logger.warning("Epäonnistunut Web-UI-kirjautuminen ip=%s", ip)
+
+
+def _login_clear_failures(request: Request) -> None:
+    ip = _client_ip(request)
+    with _login_fail_lock:
+        _login_fail_times.pop(ip, None)
+
+
+def _session_ui_ok(request: Request) -> bool:
+    try:
+        return request.session.get(SESSION_UI_OK) is True
+    except Exception:
+        return False
+
+
+async def require_ui_key(request: Request) -> None:
+    """Vaadi UI-tunnistus: X-AgentDir-Key, istunto (ui_ok) tai POST-lomakkeessa agentdir_key.
+
+    GET ilman tunnistusta: HX-Request → 401 + HX-Redirect; text/html → 307 Location; muut → 401.
+    """
     secret = _ui_secret()
     if not secret:
         return
     if request.headers.get("X-AgentDir-Key", "") == secret:
         return
-    if request.method == "POST" and form_key == secret:
+    if _session_ui_ok(request):
         return
+    if request.method == "GET":
+        if request.headers.get("HX-Request", "").strip().lower() == "true":
+            _log_ui_401(request, "htmx_no_session")
+            raise HTTPException(
+                status_code=401,
+                detail="Kirjaudu /ui/login tai käytä otsikkoa X-AgentDir-Key.",
+                headers={"HX-Redirect": _hx_redirect_login_url(request)},
+            )
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept:
+            nxt = _login_next_query(request)
+            raise HTTPException(
+                status_code=307,
+                headers={"Location": f"/ui/login?next={nxt}"},
+            )
+    _log_ui_401(request, "no_session_or_header")
     raise HTTPException(
         status_code=401,
-        detail="Aseta X-AgentDir-Key tai lomakkeen kenttä agentdir_key (POST).",
+        detail="Kirjaudu /ui/login tai käytä otsikkoa X-AgentDir-Key.",
+    )
+
+
+def _verify_ui_access(request: Request, form_key: str = "") -> None:
+    """POST: X-AgentDir-Key, istunto tai lomake agentdir_key; HTMX → 401 + HX-Redirect."""
+    secret = _ui_secret()
+    if not secret:
+        return
+    if request.headers.get("X-AgentDir-Key", "") == secret:
+        return
+    if _session_ui_ok(request):
+        return
+    if request.method == "POST" and form_key and secrets.compare_digest(form_key, secret):
+        return
+    if request.headers.get("HX-Request", "").strip().lower() == "true":
+        _log_ui_401(request, "htmx_post_no_auth")
+        raise HTTPException(
+            status_code=401,
+            detail="Kirjaudu /ui/login tai lähetä agentdir_key-lomakekenttä.",
+            headers={"HX-Redirect": "/ui/login"},
+        )
+    _log_ui_401(request, "post_no_auth")
+    raise HTTPException(
+        status_code=401,
+        detail="Kirjaudu /ui/login tai lähetä agentdir_key-lomakekenttä.",
     )
 
 
@@ -72,6 +232,68 @@ def _templates() -> Jinja2Templates:
 
 
 router = APIRouter(prefix="/ui", tags=["ui"])
+
+
+def _safe_internal_path(url: str) -> str:
+    """Estä avoin uudelleenohjaus: vain polku joka alkaa / (ei //)."""
+    u = (url or "/ui/").strip() or "/ui/"
+    if not u.startswith("/") or u.startswith("//"):
+        return "/ui/"
+    return u
+
+
+@router.get("/login", response_class=HTMLResponse, include_in_schema=False)
+async def ui_login_get(
+    request: Request,
+    next: str = Query("", alias="next"),
+    err: str = Query(""),
+):
+    if not _ui_secret():
+        return RedirectResponse(url="/ui/", status_code=302)
+    if _session_ui_ok(request):
+        return RedirectResponse(url=_safe_internal_path(next), status_code=302)
+    config = _load_config()
+    return _templates().TemplateResponse(
+        request,
+        "login.html",
+        {
+            "request": request,
+            "agent_name": config.get("name", "Agent"),
+            "agent_role": config.get("role", ""),
+            "next": _safe_internal_path(next or "/ui/"),
+            "login_error": err == "1",
+        },
+    )
+
+
+@router.post("/login", include_in_schema=False)
+async def ui_login_post(request: Request, password: str = Form(""), next: str = Form("")):
+    """Kirjaudu UI-salasanalla; onnistuessa tyhjennä istunto sitten ui_ok (session fixation)."""
+    if not _ui_secret():
+        return RedirectResponse(url="/ui/", status_code=303)
+    dest = _safe_internal_path(next)
+    if not password or not secrets.compare_digest(password.strip(), _ui_secret()):
+        _login_rate_check_or_raise(request)
+        _login_record_failure(request)
+        q = quote(dest, safe="")
+        return RedirectResponse(url=f"/ui/login?next={q}&err=1", status_code=303)
+    try:
+        request.session.clear()
+    except Exception:
+        pass
+    # Uusi istuntosisältö kiinnityksen estämiseksi (allekirjoitettu eväste).
+    request.session[SESSION_UI_OK] = True
+    _login_clear_failures(request)
+    return RedirectResponse(url=dest, status_code=303)
+
+
+@router.post("/logout", include_in_schema=False)
+async def ui_logout_post(request: Request):
+    try:
+        request.session.clear()
+    except Exception:
+        request.session.pop(SESSION_UI_OK, None)
+    return RedirectResponse(url="/ui/login", status_code=303)
 
 
 def safe_file_in_root(root: Path, folder: str, filename: str) -> Path:
@@ -248,6 +470,7 @@ def _ctx_file_view(folder: str, filename: str, content: str) -> dict:
         "folder": folder,
         "filename": filename,
         "content": content,
+        "ui_secret_set": bool(_ui_secret()),
     }
 
 
@@ -276,7 +499,23 @@ async def ui_outbox_file(request: Request, filename: str):
 
 
 def register_ui(app) -> None:
-    """Liitä staattiset tiedostot, juuriredirect ja UI-router."""
+    """Liitä SessionMiddleware (agentdir_session), staattiset tiedostot, juuriredirect, UI-router.
+
+    https_only tulee _session_cookie_https_only(); secret _session_middleware_secret().
+    """
+    if not getattr(app.state, "agentdir_session_mw", False):
+        from starlette.middleware.sessions import SessionMiddleware
+
+        app.add_middleware(
+            SessionMiddleware,
+            secret_key=_session_middleware_secret(),
+            same_site="lax",
+            https_only=_session_cookie_https_only(),
+            max_age=14 * 24 * 3600,
+            session_cookie="agentdir_session",
+        )
+        app.state.agentdir_session_mw = True
+
     static_dir = WEB_DIR / "static"
     if static_dir.is_dir() and not getattr(app.state, "agentdir_static_mounted", False):
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")

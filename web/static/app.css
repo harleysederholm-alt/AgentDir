@@ -32,6 +32,17 @@ nav a {
   margin-right: 1rem;
 }
 nav a:hover { text-decoration: underline; }
+nav .nav-logout { display: inline; margin: 0; }
+nav .nav-logout button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+nav .nav-logout button:hover { background: var(--card); }
 main { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
 .grid {
   display: grid;

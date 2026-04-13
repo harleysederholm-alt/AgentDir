@@ -1,0 +1,13 @@
+{
+  "agent_print_id": "faa51a24",
+  "timestamp": "2026-04-13T10:30:15.626558",
+  "task": "analysoi tämä testi",
+  "mode": "openclaw",
+  "model_used": "ollama/gemma2",
+  "success": false,
+  "token_savings_pct": 0,
+  "sandbox_verified": true,
+  "causal_log": "wiki/log.md",
+  "eu_ai_act_article13": true,
+  "output_hash": 8264415655391107567
+}

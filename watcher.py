@@ -7,10 +7,17 @@ Parannukset v1.0:sta:
 ✅ Lazy loading – raskaat moduulit ladataan vasta ensimmäisellä käytöllä
 ✅ AST-pohjainen sandbox (korvaa naiivin pattern-matching)
 ✅ Kaikki bugit v1.0:sta korjattu (swarm-loop, embedding API, debounce)
+
+Vaihe 1 (The Spark) – ``AgentWatcher``:
+    Inbox-tiedosto nimetään muotoon ``{stem}.processing{suffix}`` ennen käsittelyä,
+    jotta watchdogin ``on_created`` / ``on_modified`` eivät käynnistä tuplaputkea.
+    Uudesta tehtävästä kirjoitetaan lokiin: ``Uusi tehtävä havaittu: [tiedostonimi]``.
 """
 
 from __future__ import annotations
 
+import asyncio
+import fnmatch
 import logging
 import re
 import sys
@@ -42,8 +49,17 @@ OUTBOX = ROOT_DIR / "Outbox"
 MEMORY = ROOT_DIR / "memory"
 for d in [INBOX, OUTBOX, MEMORY]:
     d.mkdir(exist_ok=True)
+(ROOT_DIR / "Workspace" / "archive").mkdir(parents=True, exist_ok=True)
 
 # ── Lazy-loaded moduulit ──────────────────────────────────────────────────────
+from agent_core import (
+    archive_inbox_after_success,
+    load_manifest,
+    manifest_context_for_system_message,
+    outbox_vastaus_path,
+    resolve_agent_role,
+)
+from evolution_log import append_success_record
 from rag_memory       import RAGMemory
 from llm_client       import LLMClient
 from file_parser      import parse, SUPPORTED
@@ -115,25 +131,97 @@ cfg.on_change(_on_config_change)
 # ── Debounce ──────────────────────────────────────────────────────────────────
 _processing: set[str] = set()
 
+
+class AgentWatcher:
+    """
+    Hermosto: Inbox/-kansion tiedostotapahtumat (watchdog) ja tuplakäsittelyn torjunta.
+
+    Uusi tiedosto nimetään muotoon ``{stem}.processing{suffix}`` (esim. ``tehtävä.md`` →
+    ``tehtävä.processing.md``), jotta ``file_parser`` säilyttää tunnisteen ``.md``.
+    Jo käsittelyssä oleva polku palautetaan sellaisenaan.
+    """
+
+    def __init__(self, inbox: Path, supported_suffixes: frozenset[str] | set[str] | None = None):
+        self.inbox = inbox.resolve()
+        self.supported_suffixes = frozenset(supported_suffixes) if supported_suffixes else frozenset(SUPPORTED)
+
+    def try_claim_file(self, path: Path) -> Path | None:
+        """
+        Varaa tiedosto käsittelyyn: nimeä uudelleen *.processing.* tai palauta jo varattu polku.
+
+        Palauttaa käsiteltävän polun tai None jos ohitetaan (tuntematon tyyppi, jo käytössä).
+        """
+        path = path.resolve()
+        try:
+            path.relative_to(self.inbox)
+        except ValueError:
+            return None
+
+        if not path.is_file():
+            return None
+
+        suffix = path.suffix.lower()
+        if suffix not in self.supported_suffixes:
+            return None
+
+        # Jo varattu käsittelyjonoon (stem päättyy ".processing")
+        if path.stem.endswith(".processing"):
+            return path
+
+        dest = path.parent / f"{path.stem}.processing{path.suffix}"
+        if dest.exists():
+            logger.debug("Kohde on jo olemassa, ohitetaan: %s", dest.name)
+            return None
+        try:
+            path.rename(dest)
+        except OSError as e:
+            logger.warning("Inbox-varaus epäonnistui (%s): %s", path.name, e)
+            return None
+        return dest
+
+    def log_new_task(self, original_display_name: str) -> None:
+        """Lokimerkintä uudesta tehtävästä (Vaihe 1 -hermosto)."""
+        logger.info("Uusi tehtävä havaittu: %s", original_display_name)
+
+
+def _inbox_source_display_name(path: Path) -> str:
+    """Palauta alkuperäinen tehtävänimi (poista väliaikainen ``.processing``-stem)."""
+    st = path.stem
+    if st.endswith(".processing"):
+        return f"{st[: -len('.processing')]}{path.suffix}"
+    return path.name
+
+
+def _ignore_inbox_filename(name: str) -> bool:
+    if name == ".gitkeep":
+        return True
+    for pat in cfg.get("watchdog.ignore_patterns", [".*", "~*", "*.tmp", "*.swp"]):
+        if fnmatch.fnmatch(name, pat):
+            return True
+    return False
+
+
 # ── Apufunktiot ───────────────────────────────────────────────────────────────
 
-def build_prompt(content: str, context: str) -> str:
+def build_prompt(content: str, context: str, role: str | None = None) -> str:
     template = cfg.get("prompt_templates.default", "")
+    r = role if role is not None else cfg.get("role", "Älykäs avustaja")
     if not template:
         template = "Olet {role}.\n\nKonteksti:\n{context}\n\nTehtävä:\n{content}"
     return template.format(
-        role=cfg.get("role", "Älykäs avustaja"),
+        role=r,
         context=context or "Ei aiempaa kontekstia.",
         content=content,
     )
 
 
-def build_code_prompt(content: str, context: str) -> str:
+def build_code_prompt(content: str, context: str, role: str | None = None) -> str:
     template = cfg.get("prompt_templates.code", "")
+    r = role if role is not None else cfg.get("role", "Koodari")
     if not template:
-        return build_prompt(content, context)
+        return build_prompt(content, context, role=r)
     return template.format(
-        role=cfg.get("role", "Koodari"),
+        role=r,
         context=context or "",
         content=content,
     )
@@ -156,18 +244,27 @@ def process_with_self_correction(content: str, file_name: str) -> tuple[str, boo
 
     rag       = _get_rag()
     llm       = _get_llm()
+    manifest  = load_manifest(ROOT_DIR)
+    role      = resolve_agent_role(cfg.all(), manifest)
+    frag      = manifest_context_for_system_message(manifest)
     n_results = cfg.get("rag.n_results", 3)
     context   = rag.query(content[:1000], n_results=n_results)
+    if frag:
+        context = (context + "\n\n" + frag).strip() if (context or "").strip() else frag
 
     use_code  = needs_code(content)
-    prompt    = build_code_prompt(content, context) if use_code else build_prompt(content, context)
+    prompt    = (
+        build_code_prompt(content, context, role=role)
+        if use_code
+        else build_prompt(content, context, role=role)
+    )
 
     attempt, last_result, success = 0, "", False
 
     while attempt < max_attempts:
         attempt += 1
         logger.info("Käsittely yritys %d/%d...", attempt, max_attempts)
-        raw = llm.complete(prompt)
+        raw = asyncio.run(llm.process_task(prompt, role))
         last_result = raw
 
         if raw.startswith("❌"):
@@ -215,29 +312,54 @@ def process_with_self_correction(content: str, file_name: str) -> tuple[str, boo
 # ── Watchdog ──────────────────────────────────────────────────────────────────
 
 class AgentHandler(FileSystemEventHandler):
+    """
+    Watchdog-kuuntelija Inbox/-kansiolle: ``on_created`` ja ``on_modified``.
+
+    Käyttää :class:`AgentWatcher`-luokkaa varatakseen tiedoston (``*.processing.*``)
+    ennen varsinaista käsittelyä, jotta sama tiedosto ei käynnistä kahta rinnakkaista putkea.
+    """
+
+    def __init__(self):
+        self._watcher = AgentWatcher(INBOX)
 
     def on_created(self, event):
+        self._ingest_filesystem_event(event)
+
+    def on_modified(self, event):
+        self._ingest_filesystem_event(event)
+
+    def _ingest_filesystem_event(self, event):
         if event.is_directory:
             return
         fp = Path(event.src_path)
-        if fp.suffix.lower() not in SUPPORTED:
+        if _ignore_inbox_filename(fp.name):
             return
-        key = str(fp.resolve())
+
+        original_name = fp.name
+        claimed = self._watcher.try_claim_file(fp)
+        if claimed is None:
+            return
+
+        key = str(claimed.resolve())
         if key in _processing:
             return
         _processing.add(key)
+        if original_name != claimed.name:
+            self._watcher.log_new_task(original_name)
+
         debounce = cfg.get("watchdog.debounce_seconds", 1.0)
         time.sleep(debounce)
         try:
-            self._handle(fp)
+            self._handle(claimed)
         except Exception as e:
-            logger.error("Käsittelyvirhe '%s': %s", fp.name, e, exc_info=True)
+            logger.error("Käsittelyvirhe '%s': %s", claimed.name, e, exc_info=True)
         finally:
             _processing.discard(key)
 
     def _handle(self, file_path: Path):
+        display_name = _inbox_source_display_name(file_path)
         print(f"\n{'='*60}")
-        print(f"📥 [{datetime.now().strftime('%H:%M:%S')}] {file_path.name}")
+        print(f"📥 [{datetime.now().strftime('%H:%M:%S')}] {display_name}")
         print(f"{'='*60}")
 
         try:
@@ -246,7 +368,7 @@ class AgentHandler(FileSystemEventHandler):
             logger.error("Parsausvirhe: %s", e)
             return
         if not content.strip():
-            logger.warning("Tiedosto tyhjä: %s", file_path.name)
+            logger.warning("Tiedosto tyhjä: %s", display_name)
             return
 
         if hooks is not None:
@@ -255,35 +377,53 @@ class AgentHandler(FileSystemEventHandler):
             except Exception:
                 logger.exception("Hook after_file_parsed")
 
-        result, success = process_with_self_correction(content, file_path.name)
+        result, success = process_with_self_correction(content, display_name)
+
+        manifest_hdr = load_manifest(ROOT_DIR)
+        agent_role = resolve_agent_role(cfg.all(), manifest_hdr)
 
         # Swarm?
         if should_swarm(result, cfg.all()):
-            child = _get_swarm().spawn_child(result, "Erikoisanalyytikko", file_path.name)
+            child = _get_swarm().spawn_child(result, "Erikoisanalyytikko", display_name)
             if child:
                 result += f"\n\n🚀 Swarm-lapsi: `{child.name}`"
 
-        # Tallenna Outboxiin
-        ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
-        out_file = OUTBOX / f"{ts}_{file_path.stem}.md"
-        header   = (
-            f"# {file_path.name}\n"
+        # Tallenna Outboxiin (The Spark: vastaus_<alkuperäinen_nimi>.md)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_file = outbox_vastaus_path(OUTBOX, display_name, ts)
+        header = (
+            f"# {display_name}\n"
             f"*{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | "
-            f"{cfg.get('name','Agent')} – {cfg.get('role','')}*\n\n---\n\n"
+            f"{cfg.get('name','Agent')} – {agent_role}*\n\n---\n\n"
         )
         out_file.write_text(header + result, encoding="utf-8")
 
         # RAG-muistiin
-        doc_id = f"{ts}_{file_path.stem}"
+        stem_for_out = Path(display_name).stem
+        doc_id = f"{ts}_{stem_for_out}"
         _get_rag().add(
             doc_id=doc_id,
             text=content[:3000] + "\n\n[VASTAUS]: " + result[:1000],
-            metadata={"timestamp": ts, "input_file": file_path.name,
-                      "result_file": out_file.name, "success": str(success)},
+            metadata={
+                "timestamp": ts,
+                "input_file": display_name,
+                "result_file": out_file.name,
+                "success": str(success),
+            },
         )
 
         # Evoluutio
         _get_evolution().record(doc_id, content[:200], success)
+
+        if success:
+            append_success_record(
+                ROOT_DIR,
+                task_size_bytes=len(content.encode("utf-8")),
+                model=str(cfg.get("llm", {}).get("model", "")),
+                source_file=display_name,
+                outbox_file=out_file.name,
+                status="success",
+            )
 
         stats = _get_evolution().get_stats()
         print(f"✅ Valmis → {out_file.name}")
@@ -307,6 +447,10 @@ class AgentHandler(FileSystemEventHandler):
             except Exception:
                 logger.exception("Hook after_task_completed")
 
+        # Onnistunut putki → arkistoi varaus; epäonnistunut → jätä .processing uudelleenkäsittelyä varten
+        if success and file_path.exists() and file_path.stem.endswith(".processing"):
+            archive_inbox_after_success(ROOT_DIR, file_path, display_name)
+
 
 # ── Käynnistys ────────────────────────────────────────────────────────────────
 
@@ -314,7 +458,8 @@ def main():
     print("\n" + "🧬 " * 20)
     print("  AgentDir v1.1 – Elävä tiedostojärjestelmä")
     print("🧬 " * 20 + "\n")
-    print(f"  Agentti   : {cfg.get('name')} – {cfg.get('role')}")
+    _mh = load_manifest(ROOT_DIR)
+    print(f"  Agentti   : {cfg.get('name')} – {resolve_agent_role(cfg.all(), _mh)}")
     print(f"  Malli     : {cfg.get('llm.model')} @ {cfg.get('llm.endpoint')}")
     print(f"  Inbox     : {INBOX.absolute()}")
     print(f"  Hot-reload: ✅ config.json tarkistetaan 3s välein")

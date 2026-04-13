@@ -106,7 +106,9 @@ agentdir/
 ├── ui_routes.py         ← Dashboard (Jinja2)
 ├── web/                 ← UI-mallit ja CSS (templates, static)
 ├── rag_memory.py        ← Semanttinen muisti (ChromaDB)
-├── llm_client.py        ← LLM-asiakasohjelma + fallback
+├── llm_client.py        ← LLM-asiakasohjelma + fallback + async ``process_task``
+├── agent_core.py        ← Manifest-rooli, Outbox-polku, Inbox → Workspace/archive
+├── evolution_log.py     ← JSONL-loki onnistuneista ajoista (``evolution.log``)
 ├── file_parser.py       ← PDF, CSV, TXT, MD, JSON
 ├── sandbox_executor.py  ← Turvallinen koodin suoritus
 ├── swarm_manager.py     ← Lapsi-agenttien hallinta
@@ -125,13 +127,16 @@ agentdir/
 ├── start-all.ps1
 ├── Dockerfile
 ├── docker-compose.yml
+├── docker-compose.secure.yml   ← valinnainen overlay + .env.secure
 ├── docker-stack.yml
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 │
 ├── Inbox/               ← PUDOTA TIEDOSTOT TÄNNE
-├── Outbox/              ← Valmiit tulokset ilmestyvät tähän
+├── Outbox/              ← Valmiit tulokset: ``vastaus_<tehtävä>.md`` (The Spark)
+├── Workspace/archive/   ← Käsitellyt Inbox-varaukset (``*.processing.*``) arkistoidaan tänne
+├── evolution.log        ← JSONL: timestamp, tehtävän koko, malli, status (onnistuneet ajot)
 ├── memory/              ← RAG-vektori-DB (ei koske käsin)
 ├── swarm/               ← Lapsi-agentit (luodaan automaattisesti)
 ├── plugins/             ← Python-laajennukset (hooks, katso plugins/README.md)
@@ -141,6 +146,13 @@ agentdir/
     ├── translator.json
     └── support.json
 ```
+
+### The Spark (hermosto → loki)
+
+- **Vaihe 1:** Uusi Inbox-tiedosto varataan nimellä ``{nimi}.processing.{pääte}``; lokirivi *Uusi tehtävä havaittu: …*.
+- **Vaihe 2:** ``LLMClient.process_task(prompt, role)`` kutsuu OpenAI-yhteensopivaa API:a **asynkronisesti** (``httpx``); rooli tulee ``manifest.json``:sta tai ``config.json``:sta.
+- **Vaihe 3:** Vastaus tallennetaan ``Outbox/vastaus_<alkuperäinen_tiedostonimi>.md``; onnistuneen käsittelyn jälkeen varaustiedosto siirtyy ``Workspace/archive/`` (ei pelkkää poistoa). Epäonnistuessa ``.processing``-tiedosto jää Inboxiin.
+- **Vaihe 4:** Onnistuneista ajoista kirjoitetaan juureen **JSONL**-tiedosto ``evolution.log`` (kentät: ``timestamp``, ``task_size_bytes``, ``model``, ``source_file``, ``outbox_file``, ``status``).
 
 ---
 
@@ -196,16 +208,30 @@ docker compose up --build
 
 macOS ja Windows Docker Desktopissa `host.docker.internal` toimii yleensä suoraan. Linuxilla tarvitaan Compose 2.x `host-gateway` (mukana tässä `docker-compose.yml`:ssä).
 
-Terveystarkistus osuu `GET http://127.0.0.1:8080/status` (A2A käynnissä `both`-tilassa).
+**Compose + salaisuudet (esimerkki):** kopioi `.env.secure.example` → `.env.secure`, täytä arvot ja käynnistä:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build
+```
+
+**Tuotanto-checklist (Compose + salaisuudet):**
+
+1. `.env.secure` täytetty (`AGENTDIR_UI_SECRET`, `AGENTDIR_API_SECRET`, `AGENTDIR_SESSION_SECRET` — katso [.env.secure.example](.env.secure.example)).
+2. Volumen [`config.json`](config.json) (tai bind-mount): `a2a.cors_origins` **ei** saa olla `["*"]` jos API:ta käytetään selaimesta internetin yli; käytä esim. `["https://oma-sovellus.example"]`.
+3. Sama `config.json`: tyhjä `a2a.api_token` + asetettu **`AGENTDIR_API_SECRET`** (tai `api_token` vain luotetussa verkossa) → `POST /task` ja `POST /rag/query` vaativat API-avaimen.
+4. Ulkoinen TLS ja reverse proxy välittävät liikenteen konttiin; Web-UI:n `Secure`-eväste: aseta **`AGENTDIR_UI_COOKIE_SECURE=1`** tai `ui.cookie_secure: true` kun käyttäjät käyttävät **https://**-osoitetta (muuten istuntoeväste ei tallennu selaimessa).
+5. **Tauri-työpöytä:** jos käytät **`AGENTDIR_UI_SECRET`**, varmista että WebViewin URL on sama **origin** kuin AgentDir-palvelin (portti ja `http`/`https` vastaavat [`desktop/README.md`](desktop/README.md) / `tauri.conf.json`), jotta istuntoeväste (`agentdir_session`) säilyy kirjautumisen jälkeen.
+
+`GET /status` on tarkoituksella kevyt terveys-/valmiustarkistus ilman API-avainta (Docker `healthcheck`). Kun **API-token** on käytössä, **`a2a.cors_origins` ei voi olla `*`** — palvelin poistaa CORS-otsikot kunnes lista on eksplisiittinen. Älä lisää `/status`-reittiin salasanasuojausta ilman että päivität healthcheckin vastaamaan.
 
 ---
 
 ## Tuotanto ja internet
 
 - Älä julkaise `server.py`:n porttia suoraan internetiin ilman **TLS:ää**, **reverse proxya** (Caddy, Traefik, nginx) ja **todennusta**.
-- **`a2a.cors_origins`**: lista sallituista `Origin`-arvoista (esim. `["https://app.example.com"]`). Oletus `["*"]` on vain kehitykseen / luotettuun lähiverkkoon; CORS luetaan `config.json`:sta ja päivittyy ilman uudelleenkäynnistystä.
+- **`a2a.cors_origins`**: lista sallituista `Origin`-arvoista (esim. `["https://app.example.com"]`). Oletus `["*"]` on vain kehitykseen / luotettuun lähiverkkoon **ilman** API-tokenia; jos **`AGENTDIR_API_SECRET`** tai **`a2a.api_token`** on asetettu, `*` ei kelpaa — määritä eksplisiittiset originat. CORS luetaan `config.json`:sta ja päivittyy ilman uudelleenkäynnistystä.
 - **`a2a.api_token`** (tyhjä = ei vaadi) tai ympäristömuuttuja **`AGENTDIR_API_SECRET`**: kun asetettu, `POST /task` ja `POST /rag/query` vaativat otsikon `X-AgentDir-Api-Key` tai `Authorization: Bearer <token>`.
-- **Web-UI**: ilman `AGENTDIR_UI_SECRET` dashboard päivittää Inbox/Outbox-listoja noin 5 s välein (HTMX). Suojatulla UI:lla käytä F5:ää tai laajennusta otsikon kanssa.
+- **Web-UI**: ilman `AGENTDIR_UI_SECRET` dashboard päivittää Inbox/Outbox-listoja noin 5 s välein (HTMX). Kun `AGENTDIR_UI_SECRET` on asetettu, selain ohjataan **`/ui/login`**-sivulle; kirjautuminen asettaa istuntoevästeen (`agentdir_session`), jolloin HTMX-osiot toimivat ilman `X-AgentDir-Key`-otsikkoa (vanhentuneessa istunnossa HTMX saa `HX-Redirect` → kirjautuminen). Vaihtoehtoisesti voit edelleen käyttää otsikkoa tai lomakkeen `agentdir_key`-kenttää. Tuotantoon: **`AGENTDIR_SESSION_SECRET`** (vähintään 16 merkkiä) erikseen UI-salasanasta, tai `config.json` → `ui.session_secret` (pitkä merkkijono); ilman niitä istunto allekirjoitetaan kehitystasolla johdetulla avaimella. **HTTPS + `Secure`-eväste:** `AGENTDIR_UI_COOKIE_SECURE=1` tai `ui.cookie_secure: true` (proxy TLS:n takana).
 - Sandbox on parannus, ei täyttä eristystä; katso [SECURITY.md](SECURITY.md) ja tunnetut rajoitukset alla.
 - `server.py` käyttää `config_manager.py`:n hot-reloadia: useimmat `config.json`-muutokset näkyvät API:ssa ja Web-UI:ssa ilman uudelleenkäynnistystä (noin 3 s viive). **Kuunneltava portti** (`a2a.port`) luetaan käynnistyksessä — portin vaihto vaatii palvelimen uudelleenkäynnistyksen.
 
@@ -226,8 +252,11 @@ location / {
   proxy_pass http://127.0.0.1:8080;
   proxy_set_header Host $host;
   proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
+
+Jos käytät Web-UI:ta HTTPS:n kautta, aseta AgentDirissa **`AGENTDIR_UI_COOKIE_SECURE=1`** (tai `ui.cookie_secure` vastaavasti), jotta `agentdir_session` saa `Secure`-lipun.
 
 ---
 
@@ -257,7 +286,7 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 - **http://127.0.0.1:8080/ui/** → Inbox- ja Outbox-listat (automaattipäivitys HTMX:llä ilman UI-salasanaa), RAG-/evoluutiotilanne, linkit **OpenAPI `/docs`** ja **ReDoc**  
 - Tiedostonäkymä: klikkaa listan tiedostonimeä (vain `Inbox/` ja `Outbox/`, ei polkupakoja).
 
-**Valinnainen suojaus:** aseta ympäristömuuttuja `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin UI-sivut vaativat otsikon `X-AgentDir-Key` tai lomakkeen kentän `agentdir_key` (tehtävän lähetys selaimesta). Ilman salasanaa UI on avoin kaikille, joilla on pääsy porttiin — älä jätä näin tuotantoon.
+**Valinnainen suojaus:** aseta `AGENTDIR_UI_SECRET` (esim. satunnainen merkkijono). Silloin HTML-pyynnöt ohjataan **`/ui/login`**-sivulle (tai voit lähettää otsikon `X-AgentDir-Key`). Lomakkeet (`POST /ui/submit`) hyväksyvät myös kentän `agentdir_key`. Istuntoevästeen allekirjoitukseen käytetään **`AGENTDIR_SESSION_SECRET`** (≥16 merkkiä), tai SHA256-avainta UI-salasanasta, tai valinnaista `config.json` → **`ui.session_secret`**. Ilman UI-salasanaa dashboard on avoin kaikille, joilla on pääsy porttiin — älä jätä näin tuotantoon.
 
 ---
 
@@ -286,7 +315,7 @@ Kun **A2A-palvelin** on käynnissä (`python server.py` tai Docker `both`), avaa
 | Tauri-työpöytä | Valmis (`desktop/`, katso `desktop/README.md`) |
 | `pip install -e .` | Valmis (`pyproject.toml`, komennot `agentdir-watcher` / `agentdir-server`) |
 | CORS + A2A API-token (`a2a.cors_origins`, `api_token` / `AGENTDIR_API_SECRET`) | Valmis |
-| Web-UI HTMX (Inbox/Outbox päivitys ilman UI-salasanaa) | Valmis |
+| Web-UI HTMX + istuntokirjautuminen `/ui/login` (`AGENTDIR_SESSION_SECRET` / `ui.session_secret`) | Valmis |
 | Plugin-hookit (`hooks.py`, `plugins/*.py`) | Valmis |
 
 ---

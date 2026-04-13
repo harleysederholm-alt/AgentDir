@@ -11,6 +11,7 @@ import logging
 import re
 from typing import Any
 
+import httpx
 import requests
 
 logger = logging.getLogger("agentdir.llm")
@@ -67,6 +68,57 @@ class LLMClient:
         resp.raise_for_status()
         data = resp.json()
         return data["choices"][0]["message"]["content"].strip()
+
+    async def process_task(self, prompt: str, role: str) -> str:
+        """
+        Async-putki Inbox-tehtäville (The Spark).
+
+        ``role`` on agentin rooli (manifest tai config); käytetään järjestelmäviestinä.
+        Yrittää fallback-malleja kuten ``complete()``.
+        """
+        system = (
+            f"Olet {role}. Noudata käyttäjän tehtävää tarkasti ja vastaa selkeästi suomeksi."
+        )
+        models_to_try = [self.model] + self.fallbacks
+
+        for model in models_to_try:
+            try:
+                text = await self._call_async(model, prompt, system)
+                if text:
+                    return text
+            except httpx.ConnectError:
+                logger.error(
+                    "LLM ei saatavilla (%s) – onko Ollama käynnissä? (ollama serve)", model
+                )
+                if model == models_to_try[-1]:
+                    return (
+                        "❌ LLM-yhteysvirhe: Varmista että Ollama on käynnissä komennolla "
+                        "'ollama serve'"
+                    )
+            except Exception as e:
+                logger.warning("Malli '%s' epäonnistui: %s – kokeillaan seuraavaa", model, e)
+
+        return "❌ Kaikki LLM-mallit epäonnistuivat."
+
+    async def _call_async(self, model: str, prompt: str, system: str | None) -> str:
+        messages: list[dict[str, str]] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "stream": False,
+        }
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.post(self.endpoint, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["choices"][0]["message"]["content"].strip()
 
     def complete_json(self, prompt: str, system: str | None = None) -> dict | None:
         """

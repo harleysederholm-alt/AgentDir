@@ -12,6 +12,7 @@ license = { text = "MIT" }
 dependencies = [
   "watchdog>=4.0.0",
   "requests>=2.31.0",
+  "httpx>=0.27.0",
   "chromadb>=0.5.0",
   "sentence-transformers>=3.0.0",
   "pypdf>=4.0.0",
@@ -19,6 +20,7 @@ dependencies = [
   "uvicorn[standard]>=0.29.0",
   "python-multipart>=0.0.9",
   "jinja2>=3.1.0",
+  "itsdangerous>=2.0.0",
   "zeroconf>=0.131.0",
 ]
 
@@ -30,7 +32,6 @@ ocr = [
 ]
 dev = [
   "pytest>=8.0.0",
-  "httpx>=0.27.0",
 ]
 
 [project.scripts]
@@ -51,4 +52,6 @@ py-modules = [
   "ui_routes",
   "verify_setup",
   "hooks",
+  "agent_core",
+  "evolution_log",
 ]

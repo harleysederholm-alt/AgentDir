@@ -2,6 +2,8 @@
 
 Kevyt **Tauri 2** -kuori, joka avaa paikallisen Web-UI:n (`http://127.0.0.1:8080/ui/`).
 
+Jos AgentDir on käynnissä **`AGENTDIR_UI_SECRET`**-suojauksella, selain (WebView) ohjautuu **`/ui/login`**-sivulle. Kirjaudu samalla salasanalla kuin ympäristömuuttujassa; onnistuneen kirjautumisen jälkeen **istuntoeväste** (`agentdir_session`) tallennetaan WebViewiin kuten tavallisessa selaimessa, ja HTMX-päivitykset toimivat ilman erillistä otsikkoa. Jos joskus käytät **HTTPS**-osoitetta Taurissa, aseta palvelimelle **`AGENTDIR_UI_COOKIE_SECURE=1`** (tai `config.json` → `ui.cookie_secure: true`), jotta evästeen `Secure`-lippu vastaa skeemaa; pelkkä `http://127.0.0.1` paikallisesti käyttää oletuksena ei-secure-evästettä.
+
 ## Vaatimukset
 
 - [Rust](https://rustup.rs/) (stable)
