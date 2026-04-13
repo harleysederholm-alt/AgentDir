@@ -19,6 +19,8 @@ uvicorn[standard]>=0.29.0
 python-multipart>=0.0.9
 jinja2>=3.1.0
 itsdangerous>=2.0.0      # Web-UI-istunnot (Starlette SessionMiddleware)
+qrcode[pil]>=8.2
+websockets>=12.0
 
 # mDNS-discovery (valinnainen)
 zeroconf>=0.131.0

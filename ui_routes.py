@@ -27,8 +27,8 @@ from pathlib import Path
 from typing import Callable
 from urllib.parse import quote, unquote
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -241,6 +241,17 @@ def _safe_internal_path(url: str) -> str:
         return "/ui/"
     return u
 
+def get_local_ip():
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 
 @router.get("/login", response_class=HTMLResponse, include_in_schema=False)
 async def ui_login_get(
@@ -405,6 +416,80 @@ async def ui_dashboard(request: Request):
         "ui_secret_set": bool(_ui_secret()),
     }
     return _templates().TemplateResponse(request, "dashboard.html", ctx)
+
+@router.get("/omninode/pair", dependencies=[Depends(require_ui_key)])
+async def ui_omninode_pair(request: Request):
+    """Generate QR code for OmniNode mobile pairing."""
+    import io
+    import qrcode
+    
+    port = request.url.port or 8080
+    local_ip = get_local_ip()
+    url = f"http://{local_ip}:{port}/ui/omninode/mobile?token={_ui_secret()}"
+    
+    img = qrcode.make(url)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return Response(content=buf.getvalue(), media_type="image/png")
+
+@router.get("/omninode/mobile", response_class=HTMLResponse)
+async def ui_omninode_mobile(request: Request, token: str = Query("")):
+    """Mobile OmniNode Interface."""
+    if token and _ui_secret() and token != _ui_secret():
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    config = _load_config()
+    ctx = {
+        "request": request,
+        "agent_name": config.get("name", "AgentDir"),
+        # Determine protocol wss vs ws based on request scheme, fallback to ws
+        "ws_url": f"ws://{request.url.hostname}:{request.url.port}/ui/omninode/ws?token={token}"
+    }
+    return _templates().TemplateResponse(request, "mobile_node.html", ctx)
+
+@router.websocket("/omninode/ws")
+async def websocket_omninode(websocket: WebSocket, token: str = Query("")):
+    if token and _ui_secret() and token != _ui_secret():
+        await websocket.close(code=1008)
+        return
+        
+    await websocket.accept()
+    from datetime import datetime
+    from omninode import global_omni_manager
+    
+    node_ref = global_omni_manager.add_ws_node(websocket)
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                import json
+                msg = json.loads(data)
+                
+                if msg.get("type") == "input":
+                    text = msg.get("text", "").strip()
+                    if text:
+                        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        inbox = ROOT.parent / "Inbox"
+                        if not inbox.exists():
+                           inbox = ROOT / "Inbox"
+                        inbox.mkdir(parents=True, exist_ok=True)
+                        (inbox / f"ui_mobile_{ts}.md").write_bytes(f"# Tehtävä (Mobiili)\n\n{text}\n".encode("utf-8"))
+                        await websocket.send_json({"type": "info", "message": "Tehtävä vastaanotettu!"})
+                        
+                elif msg.get("type") == "compute_result":
+                    task_id = msg.get("task_id")
+                    result = msg.get("result")
+                    if task_id and result is not None:
+                        global_omni_manager.handle_ws_result(task_id, result)
+                        logger.info(f"[OmniNode] Vastaanotettiin tulos taskille {task_id}")
+                        
+            except Exception as e:
+                logger.error(f"Mobile WS processing error: {e}")
+                
+    except WebSocketDisconnect:
+        global_omni_manager.remove_ws_node(node_ref)
+        logger.info("Mobiili OmniNode irtautui.")
 
 
 @router.get(

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}AgentDir – {{ agent_name }}{% endblock %}
 {% block nav_extra %}
+<a href="/ui/omninode/pair" target="_blank" style="margin-right: 15px; color: var(--accent); text-decoration: none; font-weight: bold;">📱 Parita Mobiili</a>
 {% if ui_secret_set %}
-<form action="/ui/logout" method="post" class="nav-logout">
+<form action="/ui/logout" method="post" class="nav-logout" style="display:inline-block;">
   <button type="submit">Kirjaudu ulos</button>
 </form>
 {% endif %}
