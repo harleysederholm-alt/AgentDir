@@ -1,27 +1,33 @@
 <div align="center">
   <img src="docs/agentdir_logo_v3.png" alt="AgentDir Sovereign Engine Logo" width="500"/>
 
-  <h1>🧬 AgentDir Sovereign Engine 3.5</h1>
+  <h1>🧬 AgentDir Sovereign Engine 3.5.1-alpha</h1>
 
   <p><strong>Maailmanluokan 100% lokaali asynkroninen tekoäly-ekosysteemi.</strong><br>
-  Tuo autonomiset tekoälyagentit (kuten Gemma 4e4b) suoraan käyttöjärjestelmäsi tiedostotasolle hermoverkko-orgaanisella putkella.</p>
+  Tuo autonomiset tekoälyagentit suoraan tiedostojärjestelmään. Ei API-maksuja. Ei pilvivuotoja.</p>
+
+  <h3>👉 <a href="QUICKSTART.md">Pika-aloitus (3 min)</a> 👈</h3>
 
   <p>
     <a href="https://github.com/YOUR_GITHUB_USER/agentdir/actions/workflows/ci.yml"><img src="https://github.com/YOUR_GITHUB_USER/agentdir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
-    <img src="https://img.shields.io/badge/Release-v3.5%20Sovereign-gold" alt="Version">
+    <img src="https://img.shields.io/badge/Release-v3.5.1%20Alpha-gold" alt="Version">
     <img src="https://img.shields.io/badge/AI_Engine-Gemma_4-purple" alt="Gemma4">
-    <img src="https://img.shields.io/badge/Privacy-100%25_Airgapped-green" alt="No API costs">
+    <img src="https://img.shields.io/badge/Security-Win_Sandbox-red" alt="Sandbox">
   </p>
 </div>
 
 ---
 
-## 🚀 The Paradigm Shift
+## 🚀 Vision: AI-Native File System
 
 **Jokainen kansio on itsenäinen, oppiva tekoälyagentti.**
 
-AgentDir 3.5 Sovereign Engine ei ole vain LLM-wrapper; se on autonominen tekoäly-ohjelmistoarkkitehtuuri. Se muuttaa paikallisen tiedostojärjestelmäsi älykkääksi reaktoriksi: Pudota tiedosto `Inbox/`-kansioon → Agentti herää lennosta, lukee koodin, käyttää semanttista muistiaan (RAG), suorittaa koodin turvallisessa hiekkalaatikossa (AST Sandbox), ja puskee validoidun raportin `Outbox/`-kansioon ilman ensimmäistäkään verkkokutsua pilveen.
+AgentDir Sovereign Engine ei ole vain LLM-wrapper; se on autonominen tekoäly-ohjelmistoarkkitehtuuri. Se muuttaa paikallisen hakemistosi älykkääksi reaktoriksi: Pudota tiedosto `Inbox/`-kansioon → Agentti herää lennosta, tutkii (Hermes), koodaa, suorittaa tuloksen turvallisessa hiekkalaatikossa (Win Sandbox), ja puskee validoidun raportin `Outbox/`-kansioon ilman ensimmäistäkään verkkokutsua pilveen.
+
+*Katso [QUICKSTART.md](QUICKSTART.md) nopeimpaan aloitukseen!*
+
+---
 
 ---
 

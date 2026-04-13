@@ -190,9 +190,42 @@ Vastaa AINOASTAAN JSON-muodossa: {{"new_prompt": "uusi prompt tähän", "reasoni
             reasoning = proposal.get("reasoning", "")
 
             if new_prompt and len(new_prompt) > 50:
-                self._apply_evolution(new_prompt, reasoning, current_rate)
+                require_approval = self.evo_cfg.get("require_approval", True)
+                if require_approval:
+                    self._create_proposal(new_prompt, reasoning, current_rate)
+                else:
+                    self._apply_evolution(new_prompt, reasoning, current_rate)
         except Exception as e:
             logger.error("Evolution proposal epäonnistui: %s", e)
+
+    def _create_proposal(self, new_prompt: str, reasoning: str, old_rate: float):
+        """Luo ehdotus tiedostona hyväksyntää varten (vastaa AI Act säädöksiä ihmisen valvonnasta)."""
+        version = self._current_version()
+        proposal_file = Path("Outbox") / f"EVOLUTION_PROPOSAL_v{version}.md"
+        prompt_escaped = new_prompt.replace("```", "'''")
+        content = f"""# 🧬 AgentDir Evoluutioehdotus (v{version})
+
+Tekoälyagentti on havainnut, että onnistumisprosentti on pudonnut (Nykyinen: {old_rate*100:.0f}%).
+Agentti on analysoinut epäonnistuneet tapaukset ja luonut itselleen paremman ohjeistuksen.
+
+### Agentin perustelu (AI Reasoning):
+> {reasoning}
+
+### Uusi ehdotettu Prompt:
+```markdown
+{prompt_escaped}
+```
+
+## TOIMENPITEET (Valitse yksi):
+1. **Hyväksy**: Kopioi yllä oleva prompt tiedostoon `config.json` kohtaan `prompt_templates.default` tai `prompt_manageriin`.
+2. **Hylkää**: Poista tämä tiedosto.
+
+*(Voit säätää `evolution.require_approval`: `false` `config.json` tiedostosta poistaaksesi manuaalisen vahvistuksen)*
+"""
+        proposal_file.parent.mkdir(exist_ok=True)
+        proposal_file.write_text(content, encoding="utf-8")
+        logger.info("🧬 Evoluutioehdotus v%d luotu Outboxiin odottamaan ihmisen hyväksyntää.", version)
+        print(f"\n🧬 TURVALLISUUSPAUSE: Evoluutioehdotus v{version} luotu (Outbox/EVOLUTION_PROPOSAL_v{version}.md)")
 
     def _apply_evolution(self, new_prompt: str, reasoning: str, old_rate: float):
         """Tallenna uusi versio ja päivitä config."""

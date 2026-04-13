@@ -1,7 +1,7 @@
 {
-  "policy_1000_ms": 0.36,
-  "sandbox_ms": 25.17,
+  "policy_1000_ms": 0.64,
+  "sandbox_ms": 60.29,
   "sandbox_ok": true,
-  "rag_100docs_ms": 0.64,
-  "memmachine_100_rw_ms": 0.12
+  "rag_100docs_ms": 3.16,
+  "memmachine_100_rw_ms": 0.31
 }
