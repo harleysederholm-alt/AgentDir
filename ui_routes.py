@@ -487,7 +487,16 @@ async def websocket_omninode(websocket: WebSocket, token: str = Query("")):
                         # Wait for watcher.py to generate output
                         out_file = outbox / f"vastaus_{filename}"
                         async def wait_for_result():
-                            for _ in range(120): # Odota 120 sekuntia, laskenta voi olla hidasta NPU:lla
+                            # Simulated telemetry for premium UX
+                            await asyncio.sleep(1.5)
+                            try: await websocket.send_json({"type": "info", "message": "⚡ Yhteys Neuraaliverkkoon muodostettu."}) 
+                            except: pass
+                            
+                            await asyncio.sleep(2.5)
+                            try: await websocket.send_json({"type": "info", "message": "🧠 Analysoidaan kontekstia ja haetaan RAG-muisteja..."})
+                            except: pass
+
+                            for _ in range(115): # Odota loput
                                 if out_file.exists():
                                     try:
                                         content = out_file.read_text(encoding="utf-8")
