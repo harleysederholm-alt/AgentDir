@@ -13,6 +13,14 @@ import sys
 import shlex
 from pathlib import Path
 
+# Pakotetaan UTF-8 koodaus, jotta hienot ASCII-boxit toimivat Windows-terminaalissa
+if sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except (AttributeError, Exception):
+        pass
+
+
 
 def cmd_status() -> str:
     """
