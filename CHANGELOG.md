@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0-rc1] - 2026-04-13
+
+### Added
+
+- **Test Suite v2** — 3 new test modules covering MCP Server, Hermes/OpenClaw workflows, and CLI REPL (`tests/test_mcp_server.py`, `tests/test_workflows.py`, `tests/test_cli_repl.py`).
+- **Docker Hub Readiness** — `Dockerfile.sovereign` updated with `HEALTHCHECK`, granular `VOLUME` mounts, `LABEL` metadata, and all v3.5.1+ modules (`workflows/`, `sandbox/`, `.prompts/`).
+- **Hermes & OpenClaw CLI Integration** — Direct REPL commands: `hermes "query"` and `openclaw "task"` bypass orchestrator and call workflow modules directly.
+
+### Changed
+
+- **`pyproject.toml`** — Version `1.1.0` → `3.5.1-alpha`, added 7 missing modules to `py-modules`.
+- **`requirements.txt`** — Header updated to `Sovereign Engine 3.5.1`.
+- **`launch_sovereign.ps1`** — Removed broken `openclaw gateway` reference; CLI now runs directly in current terminal.
+
+### Fixed
+
+- CLI `help` command now shows `hermes` and `openclaw` options.
+- Logo version updated to `3.5.1`.
+
+---
+
 ## [3.5.1-alpha] - 2026-04-13
 
 ### Added

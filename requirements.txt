@@ -1,4 +1,4 @@
-# AgentDir v1.0 – Python-riippuvuudet
+# AgentDir Sovereign Engine 3.5.1 – Python-riippuvuudet
 # Asenna: pip install -r requirements.txt
 
 # Ydin

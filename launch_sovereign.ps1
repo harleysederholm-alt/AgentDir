@@ -27,13 +27,9 @@ Write-Host "-> Käynnistetään Tauri Web-UI / Desktop ohjelma..." -ForegroundCo
 Start-Process -FilePath "cmd.exe" -ArgumentList "/c cd desktop && npx tauri dev" -WorkingDirectory $Root -WindowStyle Normal
 Start-Sleep -Seconds 2
 
-# 3. KÄYNNISTETÄÄN OPENCLAW (Erilliseen ikkunaan)
-Write-Host "-> Käynnistetään OpenClaw Gateway portilla..." -ForegroundColor Green
-# Oletetaan, että käyttäjällä on openclaw asennettuna globaalisti
-Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit -Command `"color 0b; echo '🦞 OPENCLAW GATEWAY ACTIVE (Gemma 4 Valmiina)'; openclaw gateway --port 18789 --allow-unconfigured`"" -WorkingDirectory $Root -WindowStyle Normal
-
-# 4. KÄYNNISTETÄÄN AGENTDIR REPL (Tähän terminaaliin)
+# 3. KÄYNNISTETÄÄN AGENTDIR REPL (Tähän terminaaliin)
 Write-Host "-> Tuodaan Sovereign Matrix tähän terminaaliin..." -ForegroundColor Green
 Start-Sleep -Seconds 1
-# Käynnistetään cli.py omassa ikkunassaan (Sovereign REPL)
-Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit -Command `"& '$py' cli.py`"" -WorkingDirectory $Root -WindowStyle Normal
+
+# Käynnistetään Sovereign REPL suoraan tähän terminaaliin
+& $py cli.py

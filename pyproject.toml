@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentdir"
-version = "1.1.0"
+version = "3.5.1-alpha"
 description = "Elävä tiedostojärjestelmä-agentti (Inbox → LLM → Outbox)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -54,4 +54,11 @@ py-modules = [
   "hooks",
   "agent_core",
   "evolution_log",
+  "cli",
+  "mcp_server",
+  "omninode",
+  "prompt_manager",
+  "orchestrator",
+  "anchor_manager",
+  "auth_service",
 ]
