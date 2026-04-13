@@ -470,12 +470,41 @@ async def websocket_omninode(websocket: WebSocket, token: str = Query("")):
                     text = msg.get("text", "").strip()
                     if text:
                         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"ui_mobile_{ts}.md"
+                        
                         inbox = ROOT.parent / "Inbox"
                         if not inbox.exists():
                            inbox = ROOT / "Inbox"
                         inbox.mkdir(parents=True, exist_ok=True)
-                        (inbox / f"ui_mobile_{ts}.md").write_bytes(f"# Tehtävä (Mobiili)\n\n{text}\n".encode("utf-8"))
-                        await websocket.send_json({"type": "info", "message": "Tehtävä vastaanotettu!"})
+                        
+                        outbox = ROOT.parent / "Outbox"
+                        if not outbox.exists():
+                           outbox = ROOT / "Outbox"
+                           
+                        (inbox / filename).write_bytes(f"# Tehtävä (Mobiili)\n\n{text}\n".encode("utf-8"))
+                        await websocket.send_json({"type": "info", "message": "Tehtävä vastaanotettu! Isäntä prosessoi..."})
+                        
+                        # Wait for watcher.py to generate output
+                        out_file = outbox / f"vastaus_{filename}"
+                        async def wait_for_result():
+                            for _ in range(120): # Odota 120 sekuntia, laskenta voi olla hidasta NPU:lla
+                                if out_file.exists():
+                                    try:
+                                        content = out_file.read_text(encoding="utf-8")
+                                        parts = content.split("---\n\n", 1)
+                                        ans = parts[1] if len(parts) > 1 else content
+                                        await websocket.send_json({"type": "info", "message": f"\n🤖 Isäntä:\n{ans.strip()}"})
+                                    except Exception as e:
+                                        logger.error("Error reading out_file for mobile: %s", e)
+                                    return
+                                await asyncio.sleep(1)
+                            try:
+                                await websocket.send_json({"type": "info", "message": "⚠️ Vastaus aikakatkaistiin (yli 120s). Katso isännän Outbox."})
+                            except:
+                                pass
+                        
+                        import asyncio
+                        asyncio.create_task(wait_for_result())
                         
                 elif msg.get("type") == "compute_result":
                     task_id = msg.get("task_id")
