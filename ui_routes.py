@@ -443,12 +443,28 @@ async def ui_submit_post(
     to_write: list[tuple[str, bytes]] = []
 
     raw_text = (text or "").strip()
+    file_embedded = False
+
     if file is not None and getattr(file, "filename", None):
         data = await file.read()
         if len(data) > max_bytes:
             raise HTTPException(413, "Tiedosto liian suuri (katso config ui.max_upload_mb).")
         fname = _sanitize_upload_filename(file.filename)
-        to_write.append((f"ui_{ts}_{fname}", data))
+        
+        # Upotetaan sisältö tekstiin, jos teksti on annettu (ja jos data on utf-8)
+        if raw_text:
+            try:
+                file_text = data.decode("utf-8")
+                raw_text += f"\n\n--- Liitetiedosto ({fname}) ---\n"
+                ext = fname.split('.')[-1] if '.' in fname else 'text'
+                raw_text += f"```{ext}\n{file_text}\n```\n"
+                file_embedded = True
+            except UnicodeDecodeError:
+                # Binääritiedosto, ei voida upottaa tällä lailla
+                pass
+
+        if not file_embedded:
+            to_write.append((f"ui_{ts}_{fname}", data))
 
     if raw_text:
         to_write.append((f"ui_{ts}_task.md", f"# Tehtävä (Web-UI)\n\n{raw_text}\n".encode("utf-8")))

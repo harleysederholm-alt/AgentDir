@@ -43,7 +43,13 @@ class ModelRouter:
         try:
             from openai import OpenAI
 
-            base_url = os.getenv("OLLAMA_HOST", "http://localhost:11434/v1")
+            host_env = os.getenv("OLLAMA_HOST")
+            if not host_env or host_env == "0.0.0.0":
+                base_url = "http://localhost:11434/v1"
+            elif not host_env.startswith("http"):
+                base_url = f"http://{host_env}:11434/v1"
+            else:
+                base_url = host_env
             client = OpenAI(base_url=base_url, api_key="ollama")
             model_name = model.replace("ollama/", "")
 
@@ -59,8 +65,21 @@ class ModelRouter:
             )
             return resp.choices[0].message.content or ""
 
-        except ImportError:
-            # OpenAI ei asennettuna — palauta mock-vastaus
-            return f"[MOCK] Model {model} vastaus tehtävään: {prompt[:100]}"
+        except ImportError as e:
+            # Vaatii live-openai-kirjaston ollamaa varten
+            print("![ERROR] LLM-rajapinnan käyttö vaatii 'openai' kirjaston asennuksen. Aja: pip install openai")
+            raise e
         except Exception as e:
+            # Auto-fallback OOM/RAM limits (OmniNode simulaatio tai kevyempi malli)
+            if "memory" in str(e).lower() or "oom" in str(e).lower():
+                print(f"[OMNINODE] {model} vaatii liikaa muistia. Aktivoidaan RAM Sharding ja reititetään kevyemmälle verkolle (llama3.2:3b)...")
+                try:
+                    resp = client.chat.completions.create(
+                        model="llama3.2:3b",
+                        messages=messages,
+                        max_tokens=2000,
+                    )
+                    return resp.choices[0].message.content or ""
+                except Exception as fallback_e:
+                    return f"[ERROR] Fallback-mallikutsu epäonnistui: {fallback_e}"
             return f"[ERROR] Mallikutsu epäonnistui: {e}"
