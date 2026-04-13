@@ -1,0 +1,44 @@
+# AgentDir 3.5 — Docker Compose (Sovereign Engine)
+# Käyttö: docker compose -f docker-compose.sovereign.yml up
+
+services:
+  agentdir-sovereign:
+    build:
+      context: .
+      dockerfile: Dockerfile.sovereign
+    container_name: agentdir-35
+    volumes:
+      # Mounttaa projekti konttiin
+      - .:/agentdir
+    environment:
+      - AGENTDIR_DEFAULT_MODEL=ollama/gemma4:e4b
+      - OLLAMA_HOST=http://host.docker.internal:11434/v1
+      - AGENTDIR_TARGET=/agentdir
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    command: ["status"]
+
+  # Sandbox-kontti: ERISTETTY suoritus ilman verkkoyhteyttä
+  agentdir-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sovereign
+    container_name: agentdir-sandbox
+    network_mode: "none"     # <-- EI VERKKOYHTEYTTÄ
+    read_only: true           # Vain-luku tiedostojärjestelmä
+    tmpfs:
+      - /tmp:size=100M        # Väliaikaistiedostot RAM-levylle
+    volumes:
+      - ./raw:/agentdir/raw:ro           # Vain luku
+      - ./outputs:/agentdir/outputs:rw   # Tulokset ulos
+    environment:
+      - AGENTDIR_TARGET=/agentdir
+    mem_limit: 512m           # Muistirraja
+    cpus: "1.0"               # CPU-raja
+    pids_limit: 50            # Prosessiraja (fork-pommi suoja)
+    security_opt:
+      - no-new-privileges     # Ei oikeuksien eskalointia
+    command: ["shell"]         # Odottaa komentoja

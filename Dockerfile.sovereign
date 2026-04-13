@@ -1,0 +1,52 @@
+# AgentDir 3.5 — Sovereign Engine Dockerfile
+# Multi-stage build: pienempi tuotantoimage
+# Sandbox-eristys: --network none subprocess-tasolla
+
+# ── Vaihe 1: Riippuvuudet (builder) ─────────────────────────────────────
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# Järjestelmäriippuvuudet (FAISS tarvitsee)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ── Vaihe 2: Runtime ────────────────────────────────────────────────────
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Kopioi asennetut paketit builderista
+COPY --from=builder /install /usr/local
+
+# Kopioi koko sovellus
+COPY *.py ./
+COPY workspace/ ./workspace/
+COPY docs/ ./docs/
+COPY web/ ./web/ 
+COPY config.json manifest.json ./
+
+# Luo QDS-kansiorakenne
+RUN mkdir -p raw wiki outputs Inbox Outbox memory plugins swarm templates
+
+# Kopioi entrypoint
+COPY docker-entrypoint-35.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Volume: agenttikansio mountataan ulkoa kehityksessä
+VOLUME /agentdir
+
+# Ympäristömuuttujat
+ENV AGENTDIR_DEFAULT_MODEL=ollama/gemma4:e4b
+ENV OLLAMA_HOST=http://host.docker.internal:11434/v1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 8080
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["status"]
