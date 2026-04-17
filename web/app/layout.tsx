@@ -37,12 +37,21 @@ export const metadata: Metadata = {
   },
   description:
     "Sovereign Engine for deterministic agentic workflows. Paikallinen, ei-yappauttava kognitiivinen kerros, jossa .yaml on logiikka ja .md on konteksti — kaikki ajettu Gemma 4B:llä NPU:n päällä.",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/achii-wrench.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/achii-wrench.png", type: "image/png", sizes: "512x512" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: [{ url: "/achii-wrench.png" }],
-    shortcut: ["/achii-wrench.png"],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    shortcut: ["/favicon.ico"],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Achii",
+    statusBarStyle: "black-translucent",
   },
   openGraph: {
     title: "AgentDir × Achii — Sovereign Engine",
@@ -65,6 +74,21 @@ export default function RootLayout({
       lang="fi"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
+      <head>
+        {/* Explicit favicon link — some Vercel/Next combinations skip the
+            metadata.icons entry on first paint, so we back it up inline. */}
+        <link rel="icon" type="image/png" href="/achii-wrench.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        {/* Preload the theater-stage background so it renders on first paint
+            instead of flashing a flat #0F0F0F panel. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/achii-stage.jpg"
+          // @ts-expect-error — fetchpriority is not yet in React DOM types.
+          fetchpriority="high"
+        />
+      </head>
       <body className="min-h-screen bg-base_bg font-body text-ink_soft antialiased">
         <div className="relative z-10">{children}</div>
       </body>

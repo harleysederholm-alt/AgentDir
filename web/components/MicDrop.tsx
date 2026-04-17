@@ -1,6 +1,6 @@
 import Image from "next/image";
 import QRCode from "qrcode";
-import { Download, QrCode } from "lucide-react";
+import { Download, QrCode, Terminal as TerminalIcon } from "lucide-react";
 
 const PLATFORMS = [
   {
@@ -40,7 +40,9 @@ const PLATFORMS = [
   },
 ];
 
-const DOWNLOAD_URL = "https://agentdir.achii.dev/download";
+// Served from the same origin as the landing page — the QR takes the visitor
+// straight into the PWA origin story, which then prompts "Add to Home Screen".
+const DOWNLOAD_URL = "https://agentdir.achii.dev/app/";
 
 const RELEASE_NOTES = [
   {
@@ -125,21 +127,23 @@ export async function MicDrop() {
           <div className="panel flex flex-col items-start gap-6 p-7">
             <div className="eyebrow flex items-center gap-2">
               <QrCode size={13} />
-              Skannaa & asenna mobiilidemo
+              Asenna PWA puhelimeen
             </div>
             <div
               className="aspect-square w-full max-w-[280px] rounded-lg border border-panel_line bg-ink_soft p-4 [&_svg]:h-full [&_svg]:w-full"
-              aria-label={`QR-koodi lataussivulle ${DOWNLOAD_URL}`}
+              aria-label={`QR-koodi Achii-PWA:n osoitteeseen ${DOWNLOAD_URL}`}
               role="img"
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
             <p className="font-body text-[14.5px] leading-relaxed text-ink_soft/70">
-              QR vie Builder&apos;s Challenge -demosivulle: valitse TestFlight
-              (iOS) tai APK (Android). Mobiili pyörii identtisellä paletilla
-              ja samalla Gemma-4B-ytimellä, mutta MLC-runtimella NPU:n päällä.
+              Skannaa QR puhelimella (tai klikkaa alla) → origin story pelaa
+              läpi, sitten <code className="font-mono text-ink_soft">Add to
+              Home Screen</code>. iOS Safari: jaa-nappi → &ldquo;Lisää
+              Koti-valikkoon&rdquo;. Android Chrome: ⋮ → &ldquo;Asenna
+              sovellus&rdquo;. Ajaa samalla Gemma 4B -ytimellä NPU:n päällä.
             </p>
-            <a href="/download" className="copper-cta">
-              Avaa mobiililataus
+            <a href="/app/" className="copper-cta">
+              Avaa Achii-PWA
               <Download size={16} />
             </a>
           </div>
@@ -192,6 +196,75 @@ export async function MicDrop() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Terminal: git clone + CLI one-shot */}
+        <div className="mt-12">
+          <article className="panel overflow-hidden">
+            <header className="flex items-center gap-3 border-b border-panel_line bg-panel_deep/40 px-6 py-4">
+              <TerminalIcon size={15} className="text-accent_amber" />
+              <div className="flex-1">
+                <div className="eyebrow mb-0.5">Kehittäjälle · terminaalissa</div>
+                <h3 className="font-display text-lg font-semibold text-ink_soft">
+                  Kloonaa &amp; aja CLI paikallisesti
+                </h3>
+              </div>
+              <span className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-ink_muted md:inline">
+                bash · zsh · fish
+              </span>
+            </header>
+            <div className="grid gap-6 p-6 md:grid-cols-[1.15fr_0.85fr]">
+              <pre className="overflow-x-auto rounded-md border border-panel_line bg-[#0a0a0a] px-5 py-4 font-mono text-[12.5px] leading-relaxed text-ink_soft">
+                <code>
+                  <span className="text-ink_dim">{"# 1) Kloonaa repo\n"}</span>
+                  <span className="text-accent_amber">$ </span>git clone https://github.com/harleysederholm-alt/AgentDir.git{"\n"}
+                  <span className="text-accent_amber">$ </span>cd AgentDir{"\n\n"}
+                  <span className="text-ink_dim">{"# 2) Asenna riippuvuudet (Python 3.11+)\n"}</span>
+                  <span className="text-accent_amber">$ </span>pip install -e .{"\n\n"}
+                  <span className="text-ink_dim">{"# 3) Aja origin story / whoami\n"}</span>
+                  <span className="text-accent_amber">$ </span>python cli.py achii --whoami{"\n\n"}
+                  <span className="text-ink_dim">{"# 4) Avaa REPL + harness-komennot\n"}</span>
+                  <span className="text-accent_amber">$ </span>python cli.py{"\n"}
+                  <span className="text-accent_copper">agentdir &gt; </span>/status{"\n"}
+                  <span className="text-accent_copper">agentdir &gt; </span>/harness
+                </code>
+              </pre>
+              <div className="flex flex-col gap-3 font-body text-[13.5px] leading-relaxed text-ink_soft/75">
+                <p>
+                  CLI on täysin lokaali: banneri, TUI-palkki, slash-komennot (
+                  <code className="font-mono text-ink_soft">/status</code>,{" "}
+                  <code className="font-mono text-ink_soft">/harness</code>,{" "}
+                  <code className="font-mono text-ink_soft">/attach</code>,{" "}
+                  <code className="font-mono text-ink_soft">/logs</code>,{" "}
+                  <code className="font-mono text-ink_soft">/clean</code>,{" "}
+                  <code className="font-mono text-ink_soft">/whoami</code>).
+                  One-shot-tilassa <code className="font-mono text-ink_soft">--json</code>{" "}
+                  putkittaa suoraan <code className="font-mono text-ink_soft">jq</code>:hen.
+                </p>
+                <p className="text-ink_soft/55">
+                  Ei pilviriippuvuuksia, ei telemetriaa. Pre-built
+                  autocompletion tiedostot{" "}
+                  <code className="font-mono text-ink_soft">completions/</code>-kansiossa.
+                </p>
+                <div className="mt-auto flex flex-wrap gap-2 pt-2">
+                  <a
+                    href="https://github.com/harleysederholm-alt/AgentDir"
+                    className="ghost-cta"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Avaa GitHubissa
+                  </a>
+                  <a
+                    href="https://github.com/harleysederholm-alt/AgentDir/archive/refs/heads/main.tar.gz"
+                    className="ghost-cta"
+                  >
+                    Lataa .tar.gz
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

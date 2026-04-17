@@ -57,9 +57,18 @@ export function Header() {
           ))}
         </ul>
 
-        <a href="#lataa" className="copper-cta hidden md:inline-flex">
-          Ota Achii käyttöön
-        </a>
+        <div className="hidden items-center gap-3 md:flex">
+          <a
+            href="/app/"
+            className="ghost-cta"
+            aria-label="Avaa Achii-chat-PWA"
+          >
+            Avaa Achii
+          </a>
+          <a href="#lataa" className="copper-cta">
+            Asenna / lataa
+          </a>
+        </div>
       </nav>
     </header>
   );

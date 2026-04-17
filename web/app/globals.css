@@ -51,6 +51,240 @@ body::before {
     @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent_copper px-5 py-3 font-display font-semibold tracking-wide text-white shadow-copper transition hover:bg-accent_amber hover:text-base_bg focus:outline-none focus:ring-2 focus:ring-accent_amber/60;
   }
 
+  /* ─────────────── PWA (/app) scoped component styles ─────────────────── */
+  /* All Achii PWA surfaces are wrapped in <div class="achii-pwa"> so these
+     overrides never bleed into the marketing landing. */
+  .achii-pwa {
+    position: fixed;
+    inset: 0;
+    background-color: #0f0f0f;
+  }
+
+  .achii-pwa .copper-cta {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 font-display text-sm font-semibold uppercase tracking-wider text-white transition;
+    background-image:
+      radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 55%),
+      linear-gradient(180deg, #e67e22 0%, #d35400 48%, #a84300 100%);
+    box-shadow:
+      0 16px 36px -14px rgba(211, 84, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .achii-pwa .copper-cta:hover {
+    transform: translateY(-1px);
+  }
+  .achii-pwa .copper-cta:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+
+  .achii-pwa .eyebrow {
+    @apply font-mono text-[10.5px] uppercase tracking-[0.22em] text-accent_amber/80;
+  }
+
+  .achii-pwa .app-container {
+    position: relative;
+    min-height: 100dvh;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(180deg, rgba(15, 15, 15, 0.6) 0%, rgba(15, 15, 15, 0.25) 35%, rgba(15, 15, 15, 0.85) 100%),
+      url("/achii-mobile-bg.jpg");
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+  }
+
+  .achii-pwa .glass-panel {
+    background: rgba(20, 26, 34, 0.72);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .achii-pwa .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/></svg>");
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    z-index: 1;
+  }
+
+  .achii-pwa .nexus-shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: #0f0f0f;
+    background-image:
+      linear-gradient(180deg, rgba(15, 15, 15, 0.92) 0%, rgba(15, 15, 15, 0.96) 100%),
+      radial-gradient(circle at 18% 12%, rgba(243, 156, 18, 0.08), transparent 55%),
+      radial-gradient(circle at 82% 88%, rgba(44, 62, 80, 0.22), transparent 55%);
+    background-size: cover, auto, auto;
+    background-attachment: fixed, fixed, fixed;
+  }
+
+  .achii-pwa .nexus-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: calc(env(safe-area-inset-top) + 8px) 12px 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: rgba(15, 15, 15, 0.78);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  }
+
+  .achii-pwa .nexus-messages {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: contain;
+  }
+
+  .achii-pwa .nexus-composer {
+    flex: 0 0 auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: rgba(15, 15, 15, 0.82);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .achii-pwa .nexus-input-wrap {
+    flex: 1 1 auto;
+    border-radius: 14px;
+    background-color: rgba(21, 27, 34, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 10px;
+    transition: border-color 0.15s ease;
+  }
+  .achii-pwa .nexus-input-wrap:focus-within {
+    border-color: rgba(243, 156, 18, 0.5);
+  }
+
+  .achii-pwa .nexus-textarea {
+    display: block;
+    width: 100%;
+    resize: none;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: #e6e6e6;
+    font-family: var(--font-inter), Inter, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    padding: 6px 4px;
+    max-height: 168px;
+  }
+  .achii-pwa .nexus-textarea::placeholder {
+    color: #6b6b6b;
+  }
+
+  .achii-pwa .nexus-iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 12px;
+    color: #cfd2d6;
+    background: transparent;
+    border: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .achii-pwa .nexus-iconbtn:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+  }
+  .achii-pwa .nexus-iconbtn:active {
+    background-color: rgba(255, 255, 255, 0.09);
+  }
+
+  .achii-pwa .nexus-sendbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    border-radius: 12px;
+    color: #ffffff;
+    background-image: linear-gradient(180deg, #e67e22 0%, #d35400 48%, #a84300 100%);
+    box-shadow:
+      0 10px 22px -10px rgba(211, 84, 0, 0.75),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 0;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  .achii-pwa .nexus-sendbtn:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.2);
+  }
+  .achii-pwa .nexus-sendbtn:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  .achii-pwa .nexus-sendbtn:not(:disabled):active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+  }
+
+  .achii-pwa .nexus-drawer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 86vw;
+    max-width: 320px;
+    height: 100%;
+    background-color: #0f1319;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 20px 0 60px -20px rgba(0, 0, 0, 0.8);
+    animation: drawerIn 0.22s ease-out;
+  }
+
+  .achii-pwa .nexus-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background-color: #11161d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px 18px 0 0;
+    padding-top: 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -20px 60px -10px rgba(0, 0, 0, 0.7);
+    animation: sheetIn 0.24s ease-out;
+  }
+  @media (min-width: 640px) {
+    .achii-pwa .nexus-sheet {
+      border-radius: 18px;
+      margin: 0 16px;
+    }
+  }
+
+  .achii-pwa .user-bubble {
+    max-width: 82%;
+    background-image: linear-gradient(180deg, rgba(211, 84, 0, 0.22) 0%, rgba(211, 84, 0, 0.14) 100%);
+    border: 1px solid rgba(243, 156, 18, 0.25);
+    border-radius: 16px 4px 16px 16px;
+    padding: 10px 14px;
+  }
+
+  @keyframes drawerIn {
+    from { transform: translateX(-12px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes sheetIn {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
   .ghost-cta {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-panel_blue/70 bg-transparent px-5 py-3 font-display font-semibold tracking-wide text-ink_soft transition hover:border-accent_amber/80 hover:text-accent_amber focus:outline-none focus:ring-2 focus:ring-accent_amber/40;
   }
