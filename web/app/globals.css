@@ -8,8 +8,25 @@
 
 html,
 body {
-  background: #0f0f0f;
+  background-color: #0f0f0f;
   color: #e8e5de;
+}
+
+body {
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(15, 15, 15, 0.82) 0%,
+      rgba(15, 15, 15, 0.9) 45%,
+      rgba(15, 15, 15, 0.96) 100%
+    ),
+    radial-gradient(circle at 20% 18%, rgba(211, 84, 0, 0.14), transparent 55%),
+    radial-gradient(circle at 82% 78%, rgba(44, 62, 80, 0.28), transparent 52%),
+    url("/achii-stage.jpg");
+  background-size: cover, auto, auto, cover;
+  background-position: center, center, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed, fixed;
 }
 
 ::selection {
