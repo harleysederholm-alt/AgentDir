@@ -1,0 +1,27 @@
+{
+  "name": "AgentDir × Achii — Sovereign Engine",
+  "short_name": "Achii",
+  "description": "Lokaali tekoälymaskotti taskussa. Ei pilveä, ei hallusinaatiota, vain valjaita.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F0F0F",
+  "theme_color": "#D35400",
+  "lang": "fi",
+  "categories": ["productivity", "developer", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Aja lokaali valjas",
+      "short_name": "Valjas",
+      "description": "Käynnistä viimeksi käytetty workflow suoraan aloitusnäytöltä.",
+      "url": "/?action=run",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

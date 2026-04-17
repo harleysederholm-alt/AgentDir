@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-ssr
+.vite
+.DS_Store
+*.local
+*.log
+*.tsbuildinfo
+# tsc -b composite emits these from vite.config.ts; not source of truth
+/vite.config.js
+/vite.config.d.ts
