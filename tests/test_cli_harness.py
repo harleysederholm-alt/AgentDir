@@ -227,5 +227,70 @@ class TestGlobalFlags:
         subactions = [a for a in parser._actions if getattr(a, "choices", None) and "run" in a.choices]
         assert subactions, "subparsers missing"
         choices = set(subactions[0].choices.keys())
-        for expected in ("run", "init", "status", "benchmark", "harness", "clean", "attach", "logs", "print"):
+        for expected in (
+            "run", "init", "status", "benchmark", "harness",
+            "clean", "attach", "logs", "print", "achii",
+        ):
             assert expected in choices
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Origin story — The Fallen Sovereign
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestOriginStory:
+    def test_iter_story_lines_classifies_log_speech_status(self):
+        parts = cli._iter_story_lines()
+        kinds = [k for k, _ in parts]
+        assert kinds.count("log") == 3
+        assert kinds.count("speech") == 3
+        assert kinds.count("status") == 1
+        # viimeinen on STATUS-rivi
+        assert parts[-1][0] == "status"
+        assert "ENGINE_ARMED" in parts[-1][1]
+
+    def test_iter_story_lines_missing_file_returns_empty(self, tmp_path):
+        missing = tmp_path / "does_not_exist.md"
+        assert cli._iter_story_lines(missing) == []
+
+    def test_play_origin_story_fast_outputs_full_script(self, capsys, monkeypatch):
+        monkeypatch.setenv("NO_COLOR", "1")
+        total = cli.play_origin_story(fast=True)
+        out = capsys.readouterr().out
+        assert total > 0
+        assert "BOOT_SEQUENCE_INITIATED" in out
+        assert "MEMORY_FRAGMENT_RECOVERED" in out
+        assert "CORE_ALIGNMENT_SUCCESS" in out
+        assert "READY. ENGINE_ARMED" in out
+        # Lopussa 'agentdir > /start' -prompt
+        assert "/start" in out
+        # Typewriter ei saa vuotaa CSI-koodeja NO_COLOR-tilassa
+        assert "\x1b[" not in out
+
+    def test_slash_whoami_json_emits_segments(self, capsys):
+        cli._JSON = True
+        cli.dispatch_slash("/whoami")
+        payload = json.loads(capsys.readouterr().out.strip())
+        assert payload["command"] == "whoami"
+        assert payload["script"].endswith("origin_story.md")
+        segments = payload["segments"]
+        assert len(segments) == 7  # 3 log + 3 speech + 1 status
+        assert segments[0]["kind"] == "log"
+        assert segments[-1]["kind"] == "status"
+
+    def test_achii_whoami_subcommand_via_main(self, capsys, monkeypatch):
+        monkeypatch.setenv("NO_COLOR", "1")
+        cli.main(["achii", "--whoami", "--fast"])
+        out = capsys.readouterr().out
+        assert "ENGINE_ARMED" in out
+        assert "/start" in out
+
+    def test_achii_subcommand_without_whoami_prints_usage(self, capsys):
+        cli.main(["achii"])
+        err = capsys.readouterr().err
+        assert "--whoami" in err
+
+    def test_start_slash_acknowledges(self, capsys):
+        cli.dispatch_slash("/start")
+        err = capsys.readouterr().err
+        assert "harness" in err.lower() or "engaged" in err.lower()

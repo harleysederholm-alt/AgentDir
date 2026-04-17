@@ -259,6 +259,7 @@ def _print_help() -> None:
                 ("/clean", "Nollaa konteksti-ikkuna ja tyhjennä ruutu"),
                 ("/attach <tiedosto>", "Liitä .yaml tai .md cognitiiviseen scaffoldiin"),
                 ("/logs [--tail N]", "Näytä viimeisimmät auditoitavat lokit (N=20)"),
+                ("/whoami", "Achii kertoo alkuperänsä (The Fallen Sovereign)"),
             ],
         ),
         "",
@@ -322,6 +323,105 @@ def _run_hermes(query: str) -> None:
             print(result)
     except Exception as exc:
         _eprint(paint(f"[hermes] virhe: {exc}", ERR_RED, BOLD))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Origin story — typewriter-render .prompts/origin_story.md for --whoami.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_STORY_CHAR_DELAY = 0.045      # 45 ms / merkki (Achiin ohje)
+_STORY_LOG_PAUSE = 0.650       # 650 ms [LOG] → seuraava repliikki
+_STORY_FINAL_PAUSE = 0.900     # 900 ms viimeisen repliikin jälkeen
+
+
+def _iter_story_lines(path: Path | None = None) -> list[tuple[str, str]]:
+    """Parsi `.prompts/origin_story.md` listaksi `(kind, text)` -paloja.
+
+    Hyväksyttävät `kind`-arvot: ``log``, ``speech``, ``status``. Tuntemattomat
+    rivit jätetään pois. Ei ulkoisia riippuvuuksia.
+    """
+    target = path or Path(".prompts/origin_story.md")
+    if not target.exists():
+        return []
+    out: list[tuple[str, str]] = []
+    for raw in target.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        # Markdown-header `### [LOG: …]` tai `### [STATUS: …]`
+        stripped_hdr = line.lstrip("#").strip()
+        if stripped_hdr.startswith("[STATUS:") and stripped_hdr.endswith("]"):
+            out.append(("status", stripped_hdr))
+            continue
+        if stripped_hdr.startswith("[LOG:") and stripped_hdr.endswith("]"):
+            out.append(("log", stripped_hdr))
+            continue
+        if line.startswith("Achii:"):
+            out.append(("speech", line))
+            continue
+    return out
+
+
+def _typewriter(text: str, delay: float) -> None:
+    """Kirjoita merkkijono merkki kerrallaan stdoutiin annetulla viiveellä."""
+    if delay <= 0 or not sys.stdout.isatty():
+        sys.stdout.write(text)
+        sys.stdout.flush()
+        return
+    for ch in text:
+        sys.stdout.write(ch)
+        sys.stdout.flush()
+        time.sleep(delay)
+
+
+def play_origin_story(fast: bool = False, story_path: Path | None = None) -> int:
+    """Toista Fallen Sovereign -tarina.
+
+    - ``fast=True`` ohittaa typewriter-viiveen (käytetään testeissä ja CI:ssä).
+    - Palauttaa toistetun merkkijonomäärän (0 jos tiedostoa ei löydy).
+    """
+    parts = _iter_story_lines(story_path)
+    if not parts:
+        _eprint(paint("  .prompts/origin_story.md puuttuu — tarinaa ei voida toistaa.", ERR_RED))
+        return 0
+
+    delay = 0.0 if fast else _STORY_CHAR_DELAY
+    total = 0
+
+    sys.stdout.write("\n")
+    sys.stdout.write(paint("  ~ The Fallen Sovereign ~", DIM, STEEL))
+    sys.stdout.write("\n\n")
+
+    for idx, (kind, text) in enumerate(parts):
+        if kind == "log":
+            line = paint(text, BOLD, AMBER)
+            sys.stdout.write("  " + line + "\n")
+            sys.stdout.flush()
+            total += len(text)
+            if not fast and idx != len(parts) - 1:
+                time.sleep(_STORY_LOG_PAUSE if sys.stdout.isatty() else 0)
+        elif kind == "speech":
+            sys.stdout.write("  ")
+            sys.stdout.write(paint("Achii", BOLD, COPPER))
+            sys.stdout.write(paint(":", DIM, STEEL))
+            sys.stdout.write(" ")
+            speech = text[len("Achii:"):].strip()
+            _typewriter(paint(speech, COPPER), delay)
+            sys.stdout.write("\n\n")
+            total += len(speech)
+            if not fast and idx == len(parts) - 2:
+                time.sleep(_STORY_FINAL_PAUSE if sys.stdout.isatty() else 0)
+        elif kind == "status":
+            sys.stdout.write("  ")
+            sys.stdout.write(paint(text, BOLD, OK_GREEN))
+            sys.stdout.write("\n\n")
+            total += len(text)
+
+    sys.stdout.write(paint("  agentdir > ", DIM, STEEL))
+    sys.stdout.write(paint("/start", BOLD, COPPER))
+    sys.stdout.write("\n\n")
+    sys.stdout.flush()
+    return total
 
 
 def _run_openclaw(task: str) -> None:
@@ -476,6 +576,25 @@ def _slash_attach(arg: str) -> None:
     ))
 
 
+def _slash_whoami(arg: str) -> None:
+    """Toista Achiin alkuperätarina REPL-slashina.
+
+    ``--fast`` -lippu ohittaa typewriter-viiveen. ``--json`` emittoi
+    parsitut palat strukturoituna.
+    """
+    fast = "--fast" in arg.split()
+    if _JSON:
+        parts = _iter_story_lines()
+        payload = {
+            "command": "whoami",
+            "script": ".prompts/origin_story.md",
+            "segments": [{"kind": k, "text": t} for k, t in parts],
+        }
+        print(json.dumps(payload, ensure_ascii=False))
+        return
+    play_origin_story(fast=fast)
+
+
 def _slash_logs(arg: str) -> None:
     """Viimeisimmät auditoitavat lokimerkinnät evolution_log / outputs -kansiosta."""
     tail = 20
@@ -540,6 +659,10 @@ _SLASH: dict[str, Callable[[str], None]] = {
     "/clean": _slash_clean,
     "/attach": _slash_attach,
     "/logs": _slash_logs,
+    "/whoami": _slash_whoami,
+    "/start": lambda _arg: _eprint(
+        paint("  harness engaged. kirjoita /status tai run \"tehtävä\" aloittaaksesi.", DIM, MUTED)
+    ),
 }
 
 
@@ -696,6 +819,18 @@ def _build_parser() -> argparse.ArgumentParser:
     logs_p = sub.add_parser("logs", help="näytä viimeisimmät lokimerkinnät")
     logs_p.add_argument("--tail", type=int, default=20, help="rivien määrä (oletus: 20)")
 
+    achii_p = sub.add_parser("achii", help="achii-alijärjestelmä (alkuperätarina · sielu)")
+    achii_p.add_argument(
+        "--whoami",
+        action="store_true",
+        help="toista The Fallen Sovereign -alkuperätarina",
+    )
+    achii_p.add_argument(
+        "--fast",
+        action="store_true",
+        help="ohita typewriter-viive (CI / scripted)",
+    )
+
     print_p = sub.add_parser("print", help="tulosta Agent Print -raportti")
     print_p.add_argument("--task-id", default="latest", help="tehtävän ID tai 'latest'")
 
@@ -783,6 +918,16 @@ def execute_command(args: argparse.Namespace, parser: argparse.ArgumentParser) -
 
     if cmd == "logs":
         _slash_logs(f"--tail {args.tail}")
+        return
+
+    if cmd == "achii":
+        if not getattr(args, "whoami", False):
+            _eprint(paint("käyttö: agentdir achii --whoami [--fast]", DIM, MUTED))
+            return
+        if _JSON:
+            _slash_whoami("--fast" if args.fast else "")
+            return
+        play_origin_story(fast=bool(args.fast))
         return
 
     if cmd == "print":
