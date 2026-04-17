@@ -334,13 +334,17 @@ _STORY_LOG_PAUSE = 0.650       # 650 ms [LOG] → seuraava repliikki
 _STORY_FINAL_PAUSE = 0.900     # 900 ms viimeisen repliikin jälkeen
 
 
+_STORY_PATH = Path(__file__).resolve().parent / ".prompts" / "origin_story.md"
+
+
 def _iter_story_lines(path: Path | None = None) -> list[tuple[str, str]]:
     """Parsi `.prompts/origin_story.md` listaksi `(kind, text)` -paloja.
 
     Hyväksyttävät `kind`-arvot: ``log``, ``speech``, ``status``. Tuntemattomat
-    rivit jätetään pois. Ei ulkoisia riippuvuuksia.
+    rivit jätetään pois. Ei ulkoisia riippuvuuksia. Default-polku on
+    modulin sijaintiin ankkuroitu, joten toimii riippumatta cwd:stä.
     """
-    target = path or Path(".prompts/origin_story.md")
+    target = path if path is not None else _STORY_PATH
     if not target.exists():
         return []
     out: list[tuple[str, str]] = []
