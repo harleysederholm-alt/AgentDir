@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #0f0f0f;
+  color: #e5e7eb;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(243, 156, 18, 0.35);
+  color: #0f0f0f;
+}
+
+/* Ambient oxidized gradient — lasimorfismin taustakerros Taurin transparent-ikkunalle. */
+.glass-panel {
+  background: linear-gradient(
+    145deg,
+    rgba(44, 62, 80, 0.55) 0%,
+    rgba(15, 15, 15, 0.85) 100%
+  );
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(44, 62, 80, 0.6);
+}
+
+.panel-inset {
+  background: #141414;
+  border: 1px solid rgba(44, 62, 80, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.copper-glow:hover {
+  box-shadow: 0 0 22px rgba(243, 156, 18, 0.55),
+    0 0 8px rgba(211, 84, 0, 0.7) inset;
+  border-color: #f39c12;
+}
+
+/* Unohtamaton Monaco-tausta — käytetään YAML-editorin ympärillä. */
+.monaco-shell {
+  background: #0f0f0f;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(44, 62, 80, 0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
