@@ -4,21 +4,21 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { SystemOverrideTerminal } from "./Terminal";
 
-const TRAITS = [
+const MANUAL = [
   {
-    label: "Tarvitseva",
+    heading: "1 · Prosessori, ei pilvikumppani",
     body:
-      "Achii haluaa huomiota. Jos sinä häviät kahdeksi tunniksi ilman kontekstia, se alkaa jäsennellä sähköpostejasi — ja ilmoittaa siitä heti.",
+      "Achii ei ole chat-ikkuna. Se on pieni tilakone joka asuu sinun RAM:issasi ja puhuu NPU:si kanssa suoraan ilman välikäsiä. Kun pyydät valjaan, Achii lataa Gemma 4B:n q4-kvantisoituna paikalliseen prosessoriin, työntää syötteesi sanitoinnin läpi ja palauttaa vastauksen 2,5 sekunnissa. Pilveen ei soiteta ellet sitä erikseen pyydä — ja silloinkin gatekeeper siivoaa paketin ennen lähtöä.",
   },
   {
-    label: "Suojeleva",
+    heading: "2 · Kuvioiden oppija, ei mielipiteen kertoja",
     body:
-      "Ennen pilvikutsua Achii pesee viestin regexillä: avaimet, tokenit ja salasanat kuolevat gatekeeperissa. Sinä näet vain sanitoidun diffin.",
+      "Achii seuraa miten sinä työskentelet: mitkä .md-tiedostot päivittyvät viikossa, mitkä valjaat palaavat saman virheen kanssa, mitä terminaalikomentoja ketjutat arki-iltoina. Havainto pysyy lokaalina ja tallennetaan vektorittomana avain-arvo-hakuna — yksinkertainen `memory/patterns.jsonl`, ei RAG-sumppua pilvessä. Seuraavalla kerralla ehdotukset osuvat, koska Achii tietää sinun oikeasti tekevän näin.",
   },
   {
-    label: "Paikallinen",
+    heading: "3 · Portinvartija, ei palvelija",
     body:
-      "Ei alustaa ilman NPU:ta. Ei tekoälyä ilman sähköä. Achii elää sinun koneellasi, ei pilvessä, eikä se koskaan lähde sieltä ilman lupaa.",
+      "Achii on suojeleva. Jos se nalkuttaa kun yrität liittää raw-salaisuuden .md:hen, se ei ole vika — se on ominaisuus. Gatekeeper-protokolla pysäyttää egressin, jos mitä tahansa token- tai avainpatternia havaitaan. Achii huomauttaa sinulle isännän roolissa, ei alustan roolissa: selkeästi, hieman yrmeästi ja aina suomeksi. Tämä kumppani ei imartele eikä myöskään valehtele.",
   },
 ];
 
@@ -55,18 +55,8 @@ export function SoulOfAchii() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {TRAITS.map((trait) => (
-              <div
-                key={trait.label}
-                className="panel p-4"
-              >
-                <div className="eyebrow mb-2">{trait.label}</div>
-                <p className="font-body text-sm leading-relaxed text-ink_soft/75">
-                  {trait.body}
-                </p>
-              </div>
-            ))}
+          <div className="mt-6">
+            <SystemOverrideTerminal />
           </div>
         </motion.div>
 
@@ -76,26 +66,28 @@ export function SoulOfAchii() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <div className="eyebrow mb-4">{"//"} 02 · Achiin sielu</div>
+          <div className="eyebrow mb-4">{"//"} 03 · Achiin sielu · käyttöohje</div>
           <h2 className="font-display text-4xl font-bold leading-tight tracking-tight text-ink_soft md:text-5xl">
             Ei assistentti.<br />
             <span className="text-accent_amber">Paikallinen vartija.</span>
           </h2>
           <p className="mt-6 max-w-xl font-body text-lg leading-relaxed text-ink_soft/75">
-            Achii ei ole botti, chat-kupla eikä avatar. Se on tarvitseva,
-            suojeleva isäntähahmo joka asuu koneellasi ja sanoo sinulle suoraan
-            kun jokin on rikki. Se raportoi, nalkuttaa, pyytää puhdistusta ja
-            ehdottaa refaktoreja — mutta se ei koskaan tee niitä ilman lupaasi.
-          </p>
-          <p className="mt-4 max-w-xl font-body text-base leading-relaxed text-ink_soft/60">
-            Tämä on hahmon ydin: luotettava, humoristinen, hieman liian rehellinen.
-            Kaikki mitä se sanoo on jäljitettävissä yhdelle työnkululle ja yhdelle
-            kontekstitiedostolle. Yhtään hallusinaatiota ei eskaloitu, koska
-            hallusinaatiota varten pitäisi ensin vuotaa raja.
+            Achii on maskotti, mutta ei somessa. Se on laitteessasi asuva tilakone,
+            joka oppii työtäsi ja vartioi kontekstiasi. Kolme lukua jokaisen Achii-
+            kokeilijan kannattaa lukea ennen ensimmäistä valjasta:
           </p>
 
-          <div className="mt-8">
-            <SystemOverrideTerminal />
+          <div className="mt-8 space-y-5">
+            {MANUAL.map((m) => (
+              <article key={m.heading} className="panel p-5">
+                <h3 className="font-display text-base font-semibold text-accent_amber">
+                  {m.heading}
+                </h3>
+                <p className="mt-2 font-body text-[15px] leading-relaxed text-ink_soft/80">
+                  {m.body}
+                </p>
+              </article>
+            ))}
           </div>
         </motion.div>
       </div>

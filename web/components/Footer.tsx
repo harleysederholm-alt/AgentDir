@@ -8,34 +8,37 @@ const COLUMNS = [
       { href: "#lataa", label: "Lataa työpöytä" },
       { href: "/download", label: "Mobiilibetat" },
       { href: "#demo", label: "Demo-video" },
-      { href: "#tieto", label: "Muutosloki" },
+      { href: "#lataa", label: "Release notes" },
     ],
   },
   {
-    heading: "Yritys",
+    heading: "Tapahtumat",
     links: [
-      { href: "#yhteiso", label: "Tarina" },
-      { href: "#yhteiso", label: "Builder's Challenge 2026" },
-      { href: "#yhteiso", label: "Turku HQ" },
-      { href: "mailto:achii@agentdir.dev", label: "Ota yhteyttä" },
+      { href: "#areena", label: "Builder's Challenge 13.5." },
+      { href: "#areena", label: "Turku Arena · agenda" },
+      { href: "#areena", label: "Pyydä kutsu" },
+      { href: "mailto:achii@agentdir.dev", label: "Suora sähköposti" },
     ],
   },
   {
     heading: "Teknologia",
     links: [
-      { href: "#spec", label: "Arkkitehtuurispec" },
+      { href: "#spec", label: "Harness Engineering" },
       { href: "#spec", label: "Gatekeeper-protokolla" },
-      { href: "#tieto", label: "Security whitepaper" },
-      { href: "https://github.com/harleysederholm-alt/AgentDir", label: "GitHub" },
+      { href: "#tieto", label: "Security Whitepaper" },
+      {
+        href: "https://github.com/harleysederholm-alt/AgentDir",
+        label: "GitHub · AgentDir"
+      },
     ],
   },
   {
-    heading: "Yhteisö",
+    heading: "Filosofia",
     links: [
-      { href: "#yhteiso", label: "Discord-teltta" },
-      { href: "#yhteiso", label: "Matrix-kanava" },
-      { href: "#yhteiso", label: "RSS" },
-      { href: "#yhteiso", label: "Achiin sähköpostikirjeet" },
+      { href: "#filosofia", label: "Mitä tämä on?" },
+      { href: "#sielu", label: "Achiin sielu" },
+      { href: "#tieto", label: "Kontekstin hallinta" },
+      { href: "#tieto", label: "NPU vs GPU" },
     ],
   },
 ];
@@ -43,7 +46,7 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer
-      id="yhteiso"
+      id="footer"
       className="section-pad relative border-t border-panel_line py-20"
     >
       <div className="mx-auto max-w-7xl">
@@ -95,10 +98,10 @@ export function Footer() {
             <span>MIT · AGPL (Harness Core)</span>
           </div>
           <div className="flex items-center gap-5">
-            <a href="#yhteiso" className="transition hover:text-accent_amber">
+            <a href="#filosofia" className="transition hover:text-accent_amber">
               Privacy · Local-first
             </a>
-            <a href="#yhteiso" className="transition hover:text-accent_amber">
+            <a href="#spec" className="transition hover:text-accent_amber">
               Terms of Sovereignty
             </a>
           </div>

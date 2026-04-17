@@ -13,45 +13,45 @@ interface Topic {
 
 const TOPICS: Topic[] = [
   {
-    tag: "Arkkitehtuuri",
-    title: "Arkkitehtuuri — syväsukellus",
+    tag: "Security Whitepaper",
+    title: "Miksi local-first on ainoa tapa suvereeneille tietoaineistoille",
     body:
-      "Tauri-shelli, Rust-portinvartija ja Python-orchestrator muodostavat kolmikerrosrakennelman. Komennot matkustavat IPC-kanavaa pitkin; tiedostojärjestelmä on scopattu .achii/ -hakemistoon; jokainen kutsu palaa tyypitettynä. Luvussa käydään läpi jokainen kerros ja sen sopimus.",
-    read: "18 min",
-  },
-  {
-    tag: "Prompting",
-    title: "Prompt engineering vs. valjastaminen",
-    body:
-      "Prompt engineering ylläpitää mallia. Valjastaminen rakentaa sen ympärille determinismin: skema validointi, tilakoneet, pakolliset .md-kontekstit ja regex-sanitointi. Tämä dokumentti näyttää konkreettisesti miksi promptien virittely on tie tuhoon ilman valjaita.",
-    read: "12 min",
-  },
-  {
-    tag: "Suorituskyky",
-    title: "NPU-optimointi Gemma 4B:lle",
-    body:
-      "Kvantisoinnit (q4, q8), KV-cache säännöstely, speculative decoding ja MediaPipe LLM vs. MLC:n vertailu ARM/x86-piireille. Mukana latenssiprofiili ja muistikäyttö kolmella eri laitealustalla — M3 Pro, Snapdragon X Elite ja Ryzen AI.",
-    read: "22 min",
-  },
-  {
-    tag: "Turvallisuus",
-    title: "Security whitepaper",
-    body:
-      "Uhkamallinnus Sovereign Enginelle: local-first TOCTOU, IPC-capability-luvat, regex-pohjaisen sanitizerin rajat, pilvieskalaation hyväksyntäpolut. Sisältää tarkistuslistan auditille ja verrokit OWASP LLM Top 10 -listaan.",
+      "Pilvi-LLM:t lokittavat syötteet oletuksena ja voivat käyttää niitä harjoitukseen. Kun rakennat tuotetta sairaalan, lakitoimiston tai puolustusteollisuuden asiakkaalle, tämä tekee pilvi-inferenssistä juridisesti mahdottoman. Sovereign Engine pitää painot, prompt-lokit ja audit-ketjun omalla koneellasi — pilvieskalaatio on opt-in ja kulkee aina Gatekeeperin sanitizerin läpi.",
     read: "26 min",
   },
   {
-    tag: "Prosessi",
-    title: "AgentDir-scaffoldin anatomia",
+    tag: "Edge Compute",
+    title: "NPU vs. GPU — miksi optimoimme reunalaskennalle",
     body:
-      "Miksi .achii/, docs/, Inbox/, Outbox/ ja valjaat/ on eroteltu? Mikä menee `templates/`-kansioon ja mikä `03-PRDs/`-kansioon? Käymme läpi jokaisen kansion tarkoituksen ja kirjoitamme oikean työnkulun alusta loppuun yhdessä istunnossa.",
-    read: "15 min",
+      "NPU-piirit (Snapdragon X Elite, Intel Core Ultra, Apple Neural Engine) ajavat q4-kvantisoidun 4B-mallin 2,5 s latenssilla ja alle 8 W kuormituksella. Sama kuorma GPU:lla maksaa kertaluokkaa enemmän sähköä ilman latenssi-etua. Tämä luku käy läpi muistikaistan, KV-cache-säännöstelyn ja speculative decoding -reitit kolmelle laitealustalle.",
+    read: "22 min",
   },
   {
-    tag: "Mobiili",
-    title: "Edge AI mobiilissa: MLC & MediaPipe",
+    tag: "Logic Scaffolding",
+    title: ".yaml-valjaat — miten rajaamme agenttikäyttäytymisen",
     body:
-      "Miten saamme 4B-mallin pyörimään vakaasti puhelimen NPU:lla. Kulutusbudjetti, lämpötilamaksimit, haptinen palaute käyttäjälle ajon aikana, ja turvallinen purkaminen kun akku laskee alle 50 %.",
+      "Valjas on sopimus, jonka malli ei voi rikkoa. Tässä dokumentissa näytetään miten `meta.determinism: strict`, JSON Schema -ulostulojen validointi, `egress.allow: []` -oletus ja `escalate_on`-säännöt yhdistyvät yksinkertaiseen tilakoneeseen. Mukana esimerkkivaljaat refaktorille, dokumentaatiosyntyyseille ja tietoturvatarkastukselle.",
+    read: "18 min",
+  },
+  {
+    tag: "Method",
+    title: "Promptauksesta valjastamiseen — siirtymäopas tiimeille",
+    body:
+      "Lyhyt playbook joille tekstipromptit ovat kasvaneet hallitsemattomiksi. Miten murrat 400 rivin megapromptin neljäksi `.md`-kontekstiksi + `.yaml`-vuoksi, miten peer-review toimii ajon diffille, ja miten sovitat vanhat prompt-kokoelmat valjaisiin ilman että rikkoutuu yhtään olemassa olevaa tuotantoaajoa.",
+    read: "14 min",
+  },
+  {
+    tag: "Context Windows",
+    title: "Kontekstin hallinta — mitä jätät pois 128 k -ikkunasta",
+    body:
+      "Jokaisesta token-tuhannesta laskutetaan ja jokainen turha token hajottaa mallin huomion. AgentDir täyttää ikkunan dependency-järjestyksessä: skeema, sitovat rajoitteet, aktiivinen `.md`, diff — ei mitään muuta. Tässä dokumentissa mitataan mitä näille neljälle tapahtuu kun skaalat 4 k:sta 128 k:hon eri mallisukupolvilla.",
+    read: "16 min",
+  },
+  {
+    tag: "Mobile Edge",
+    title: "4B-malli puhelimen NPU:lla — kulutus, lämpö ja purku",
+    body:
+      "MLC LLM + Gemma 4B (q4) Tensor G3:lla ja Snapdragon 8 Gen 3:lla: 2,8 s latenssi, 3 W keskikulutus, 41 °C ihotila kahden minuutin ajon jälkeen. Achiin sääntö: kun akku < 50 %, haptinen palaute kertoo käyttäjälle ennen ajoa ja tarjoaa eskalaation työpöydälle. Turvallinen purku jos SoC ylikuumenee yli 46 °C.",
     read: "14 min",
   },
 ];
@@ -78,7 +78,7 @@ export function KnowledgeHub() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="eyebrow mb-4">{"//"} 04 · Knowledge Hub</div>
+            <div className="eyebrow mb-4">{"//"} 05 · Knowledge Hub</div>
             <h2 className="font-display text-4xl font-bold leading-tight tracking-tight text-ink_soft md:text-5xl">
               Kaiva syvemmälle.<br />
               <span className="text-accent_amber">Ei kiiltokuvia.</span>

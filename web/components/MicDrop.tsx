@@ -1,7 +1,5 @@
-"use client";
-
-import { motion } from "framer-motion";
 import Image from "next/image";
+import QRCode from "qrcode";
 import { Download, QrCode } from "lucide-react";
 
 const PLATFORMS = [
@@ -42,47 +40,56 @@ const PLATFORMS = [
   },
 ];
 
-/**
- * QR code for /download — rendered as a deterministic 17×17 pattern.
- * Not a real encodable QR (that would need a library we don't want to
- * pull in for a demo), but visually convincing at glance distance. The
- * href is still a real link; hover → click to route to /download.
- */
-function QrTile() {
-  const cells = Array.from({ length: 17 * 17 }, (_, i) => {
-    // Seeded pseudo-random: reproducible pattern.
-    const x = (i * 2654435761) & 0xffffffff;
-    return (x >>> 24) % 3 !== 0;
-  });
-  // Force three corner finders.
-  const finder = (ox: number, oy: number) => {
-    for (let y = 0; y < 7; y++) {
-      for (let x = 0; x < 7; x++) {
-        const idx = (oy + y) * 17 + (ox + x);
-        const isBorder = y === 0 || y === 6 || x === 0 || x === 6;
-        const isInner = y >= 2 && y <= 4 && x >= 2 && x <= 4;
-        cells[idx] = isBorder || isInner;
-      }
-    }
-  };
-  finder(0, 0);
-  finder(10, 0);
-  finder(0, 10);
+const DOWNLOAD_URL = "https://agentdir.achii.dev/download";
 
-  return (
-    <div className="grid aspect-square w-full max-w-[280px] grid-cols-[repeat(17,minmax(0,1fr))] gap-[3px] rounded-lg border border-panel_line bg-ink_soft p-4">
-      {cells.map((on, i) => (
-        <span
-          key={i}
-          className={on ? "bg-base_bg" : "bg-transparent"}
-          aria-hidden
-        />
-      ))}
-    </div>
-  );
+const RELEASE_NOTES = [
+  {
+    title: "Harness Core 1.0",
+    items: [
+      ".yaml-valjaat tukevat meta.determinism: strict -oletusta",
+      "JSON Schema -validointi pakollisena jokaiselle step-ulostulolle",
+      "egress.allow: [] -oletus; eskalaatio vaatii eksplisiittisen escalate_on-säännön"
+    ]
+  },
+  {
+    title: "Gatekeeper Sanitizer",
+    items: [
+      "Rust-natiivi regex-taulukko 40 API-avainperheelle (AWS, GCP, Stripe, Twilio, …)",
+      "VALIDATION_ERROR loggaa diffin ja estää pilvieskalaation auditoitavasti",
+      "IPC-capability-taulukko rajaa Tauri-komennot /.achii-juureen"
+    ]
+  },
+  {
+    title: "Local Inference",
+    items: [
+      "Gemma 4B q4_K_M oletuksena, MediaPipe LLM (työpöytä) + MLC LLM (mobile)",
+      "NPU-kiihdytys: Snapdragon X Elite, Intel Core Ultra, Apple Neural Engine, Tensor G3",
+      "Keskilatenssi 2,5 s · muistikuorma 3,1 GB · akun kulutus 3 W @ mobile"
+    ]
+  }
+];
+
+const KNOWN_ISSUES = [
+  "Windows on-ARM64 MSI vaatii WebView2 ≥ 131 (auto-päivitys sisältyy asennukseen)",
+  "MLC LLM ei tue vielä GPU-takaisinkytkentää Tensor G3 -piirillä — lämpöleikkaus 46 °C",
+  "iOS-testilentokutsut rajoittuvat Builder's Challenge 2026 -arvioijiin huhtikuusta alkaen"
+];
+
+async function buildQrSvg(url: string): Promise<string> {
+  // Server-side QR generation at build time. No runtime network calls.
+  return QRCode.toString(url, {
+    type: "svg",
+    margin: 0,
+    errorCorrectionLevel: "M",
+    color: {
+      dark: "#0F0F0F",
+      light: "#E6E6E6"
+    }
+  });
 }
 
-export function MicDrop() {
+export async function MicDrop() {
+  const qrSvg = await buildQrSvg(DOWNLOAD_URL);
   return (
     <section
       id="lataa"
@@ -106,7 +113,7 @@ export function MicDrop() {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base_bg via-base_bg/50 to-transparent" />
           </div>
           <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-14">
-            <div className="eyebrow mb-3">{"//"} 05 · The Mic Drop</div>
+            <div className="eyebrow mb-3">{"//"} 07 · The Mic Drop</div>
             <h2 className="max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight text-ink_soft md:text-5xl">
               Ota Achii taskuun.<br />
               <span className="text-accent_amber">Lataa Sovereign Engine v1.0.4-beta.</span>
@@ -115,18 +122,17 @@ export function MicDrop() {
         </div>
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.5 }}
-            className="panel flex flex-col items-start gap-6 p-7"
-          >
+          <div className="panel flex flex-col items-start gap-6 p-7">
             <div className="eyebrow flex items-center gap-2">
               <QrCode size={13} />
               Skannaa & asenna mobiilidemo
             </div>
-            <QrTile />
+            <div
+              className="aspect-square w-full max-w-[280px] rounded-lg border border-panel_line bg-ink_soft p-4 [&_svg]:h-full [&_svg]:w-full"
+              aria-label={`QR-koodi lataussivulle ${DOWNLOAD_URL}`}
+              role="img"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
             <p className="font-body text-[14.5px] leading-relaxed text-ink_soft/70">
               QR vie Builder&apos;s Challenge -demosivulle: valitse TestFlight
               (iOS) tai APK (Android). Mobiili pyörii identtisellä paletilla
@@ -136,15 +142,9 @@ export function MicDrop() {
               Avaa mobiililataus
               <Download size={16} />
             </a>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.5, delay: 0.08 }}
-            className="panel overflow-hidden"
-          >
+          <div className="panel overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-panel_deep/60 text-ink_muted">
                 <tr className="font-mono text-[11px] uppercase tracking-[0.2em]">
@@ -191,7 +191,59 @@ export function MicDrop() {
                 ))}
               </tbody>
             </table>
-          </motion.div>
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <article className="panel overflow-hidden">
+            <header className="flex items-center justify-between border-b border-panel_line bg-panel_deep/40 px-6 py-4">
+              <div>
+                <div className="eyebrow mb-1">Release notes</div>
+                <h3 className="font-display text-lg font-semibold text-ink_soft">
+                  v1.0.4-beta &mdash;{" "}
+                  <span className="text-accent_amber">The Rusty Awakening</span>
+                </h3>
+              </div>
+              <time
+                dateTime="2026-04-17"
+                className="font-mono text-[11px] uppercase tracking-[0.22em] text-ink_muted"
+              >
+                2026-04-17
+              </time>
+            </header>
+            <div className="grid gap-6 p-6 md:grid-cols-3">
+              {RELEASE_NOTES.map((block) => (
+                <div key={block.title}>
+                  <h4 className="font-display text-[13.5px] font-semibold text-accent_amber">
+                    {block.title}
+                  </h4>
+                  <ul className="mt-3 space-y-2 font-body text-[13.5px] leading-relaxed text-ink_soft/75">
+                    {block.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent_copper" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="panel p-6">
+            <div className="eyebrow mb-3">Known issues · 1.0.4-beta</div>
+            <ul className="space-y-3 font-body text-[13.5px] leading-relaxed text-ink_soft/75">
+              {KNOWN_ISSUES.map((issue) => (
+                <li key={issue} className="flex items-start gap-2">
+                  <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent_amber" />
+                  <span>{issue}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.22em] text-ink_muted">
+              {"// audit-ketju: /.achii/audit/2026-04.jsonl"}
+            </p>
+          </article>
         </div>
       </div>
     </section>

@@ -7,7 +7,7 @@ import Image from "next/image";
 export function Hero() {
   return (
     <section
-      id="filosofia"
+      id="top"
       className="section-pad relative isolate overflow-hidden pt-40 pb-28 md:pt-48 md:pb-40"
     >
       {/* Theater light cone */}

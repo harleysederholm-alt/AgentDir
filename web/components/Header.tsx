@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { AchiiLogo } from "./AchiiLogo";
 
 const NAV = [
-  { href: "#filosofia", label: "Filosofia" },
-  { href: "#spec", label: "Tekninen spec" },
+  { href: "#filosofia", label: "Mitä tämä on?" },
+  { href: "#spec", label: "Harness Engineering" },
   { href: "#sielu", label: "Achiin sielu" },
   { href: "#tieto", label: "Dokumentaatio" },
-  { href: "#yhteiso", label: "Yhteisö" },
+  { href: "#areena", label: "Ota yhteyttä" },
 ] as const;
 
 export function Header() {
@@ -58,7 +58,7 @@ export function Header() {
         </ul>
 
         <a href="#lataa" className="copper-cta hidden md:inline-flex">
-          Käynnistä Achii
+          Ota Achii käyttöön
         </a>
       </nav>
     </header>

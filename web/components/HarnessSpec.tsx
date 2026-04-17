@@ -10,7 +10,7 @@ const PILLARS = [
     title: "Huolten erottaminen",
     lead: "`.yaml` on logiikka. `.md` on konteksti.",
     body:
-      "AgentDir pakottaa työnkulut strukturoituun kaksikkoon. `.yaml` määrittää askeleet, mallivalinnat ja rajat; `.md` tuo kontekstin — projektit, muistiot, eilisen päätökset. Yhdistetty vasta suoritushetkellä, ei koskaan pysyvästi. Versiohallittava, diff-attava, peer-review-kelpoinen. Prompt engineering menee eläkkeelle.",
+      "AgentDir pakottaa työnkulun strukturoituun kaksikkoon. `.yaml` määrittää askeleet, mallivalinnat, retry-käytännön ja tyyppisopimukset. `.md` tuo kontekstin — projektit, muistiot, eilisen päätökset, dokumentit. Kumpaakaan ei muokata ajon aikana. Tulos: jokainen ajo on diff-tattava ja peer-review-kelpoinen kuten mikä tahansa Pull Request. Prompt engineering menee eläkkeelle.",
     footer: "valjaat/01-scaffolding.yaml · docs/03-PRDs/",
   },
   {
@@ -18,7 +18,7 @@ const PILLARS = [
     title: "Portinvartija-protokolla",
     lead: "Ei pilvikutsua ilman puhdistusta.",
     body:
-      "Rust-taustapalvelu (Gatekeeper) siivoaa jokaisen pilveen lähtevän bytetason paketin: API-avaimet, Bearer-tokenit, henkilötiedot ja konfiguraatiosalat peittyvät regex-taulukolla ennen egressiä. Jos malli palauttaa epämuodostuneen YAML:n, Gatekeeper triggeröi `VALIDATION_ERROR`-tilan eikä lähetä mitään eteenpäin.",
+      "Rust-taustapalvelu (Gatekeeper) siivoaa jokaisen pilveen lähtevän bytetason paketin: API-avaimet, Bearer-tokenit, henkilötiedot ja konfiguraatiosalat peittyvät regex-taulukolla ennen egressiä. Jos malli palauttaa epämuodostuneen YAML:n, Gatekeeper triggeröi `VALIDATION_ERROR`-tilan, loggaa diffin ja estää eskalaation — sinä näet tarkalleen mitä oli lähdössä ulos.",
     footer: "gatekeeper.rs · sanitizer::run()",
   },
   {
@@ -26,10 +26,56 @@ const PILLARS = [
     title: "Lokaali inferenssi edge:llä",
     lead: "Gemma 4B pyörii NPU:ssa, ei pilvessä.",
     body:
-      "Oletusmoottori on Gemma 4B (q4) ajettuna työpöydällä MediaPipe LLM -runtimella, mobiilissa MLC:llä. NPU-kiihdytys hoitaa 2,5 s latenssin keskimäärin — täysin offline. Pilvi (Opus, GPT-4, Sonnet) on olemassa vain eskalaatiopolkuna, ja edes se kulkee Gatekeeperin läpi.",
-    footer: "local_ai.rs · gemma-4b.q4",
+      "Oletusmoottori on Gemma 4B (q4_K_M) ajettuna työpöydällä MediaPipe LLM -runtimella, mobiilissa MLC:llä. NPU-kiihdytys (Snapdragon X Elite, Intel Core Ultra, Apple Neural Engine, Tensor G3) hoitaa 2,5 s latenssin keskimäärin — täysin offline. Pilvi (Opus, GPT-4, Sonnet) on olemassa vain eskalaatiopolkuna, ja sekin kulkee Gatekeeperin läpi kirjatussa audit-ketjussa.",
+    footer: "local_ai.rs · gemma-4b.q4_K_M",
   },
 ];
+
+const YAML_SAMPLE = `# valjaat/02-refactor-sweep.yaml
+meta:
+  name: refactor-sweep
+  determinism: strict       # same input -> same output
+  version: 1.0.4-beta
+
+inputs:
+  - kind: markdown          # .md context, immutable during run
+    path: docs/03-PRDs/active.md
+  - kind: codebase
+    glob: "src/**/*.ts"
+
+steps:
+  - id: plan
+    model: local/gemma-4b-q4
+    temperature: 0           # no sampling, no guessing
+    schema: schemas/plan.json
+  - id: apply
+    when: plan.risk == "low"
+    tool: fs.patch
+    guard: gatekeeper.sanitise
+
+egress:
+  allow: []                  # no cloud by default
+  escalate_on:
+    - plan.risk == "high"
+    - plan.confidence < 0.6`;
+
+const MD_SAMPLE = `# docs/03-PRDs/active.md
+
+> Context-of-record — read-only at runtime.
+
+## Tavoite
+Vähennä \`apps/webserver/app/__init__.py\`:n
+syklinen tuonti ilman että rikot
+\`/health\`-reittiä (CI #1443).
+
+## Rajoitteet
+- Ei uusia riippuvuuksia.
+- Ei lisenssin vaihtoa (AGPL sisällä).
+- Tulos menee Gatekeeper::sanitise():in läpi.
+
+## Audit-muistio
+Viimeksi kosketti: @harleysederholm,
+2026-04-11, commit \`a91c3e2\`.`;
 
 export function HarnessSpec() {
   return (
@@ -89,11 +135,84 @@ export function HarnessSpec() {
         </div>
 
         <motion.div
+          initial={{ opacity: 0, y: 22 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.55 }}
+          className="mt-16 grid gap-6 lg:grid-cols-2"
+        >
+          <article className="panel overflow-hidden">
+            <header className="flex items-center justify-between border-b border-panel_line bg-panel_deep/40 px-5 py-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-accent_amber">
+                .yaml · logiikka
+              </span>
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink_muted">
+                deterministic
+              </span>
+            </header>
+            <pre className="overflow-x-auto px-5 py-4 font-mono text-[12.5px] leading-relaxed text-ink_soft/85">
+              <code>{YAML_SAMPLE}</code>
+            </pre>
+          </article>
+          <article className="panel overflow-hidden">
+            <header className="flex items-center justify-between border-b border-panel_line bg-panel_deep/40 px-5 py-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-accent_copper">
+                .md · konteksti
+              </span>
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink_muted">
+                read-only at runtime
+              </span>
+            </header>
+            <pre className="overflow-x-auto px-5 py-4 font-mono text-[12.5px] leading-relaxed text-ink_soft/85">
+              <code>{MD_SAMPLE}</code>
+            </pre>
+          </article>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="panel mt-8 p-7"
+        >
+          <h3 className="font-display text-xl font-semibold text-ink_soft">
+            Miten tämä estää hallusinaation lokaalisti
+          </h3>
+          <div className="mt-4 grid gap-6 md:grid-cols-3">
+            <div>
+              <div className="eyebrow mb-2">1 · Skeeman validointi</div>
+              <p className="font-body text-[14.5px] leading-relaxed text-ink_soft/75">
+                Jokainen step-ulostulo validoidaan JSON-skemaa vasten ennen kuin
+                seuraava step saa suorittaa. Malli ei voi &ldquo;luoda uutta
+                kenttää&rdquo; — kenttää ei olemassa, jos skemaa ei hyväksytty.
+              </p>
+            </div>
+            <div>
+              <div className="eyebrow mb-2">2 · Ei mukautuvaa samplingia</div>
+              <p className="font-body text-[14.5px] leading-relaxed text-ink_soft/75">
+                <code className="font-mono text-accent_amber">temperature: 0</code>{" "}
+                on oletus. Jos ajoihin tarvitaan luovaa vaihtelua, se pyydetään
+                eksplisiittisesti tilamuuttujalla, ja diff-loggi näyttää miksi.
+              </p>
+            </div>
+            <div>
+              <div className="eyebrow mb-2">3 · Eskalaatio vaatii hallitsijan</div>
+              <p className="font-body text-[14.5px] leading-relaxed text-ink_soft/75">
+                Pilvieskalaatio (Opus / Sonnet / GPT-4) tapahtuu vain{" "}
+                <code className="font-mono text-accent_amber">escalate_on</code>-
+                säännön täyttyessä. Käyttäjä vahvistaa diffin ennen egressiä.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6 }}
-          className="relative mt-16 overflow-hidden rounded-2xl border border-panel_line shadow-panel"
+          className="relative mt-12 overflow-hidden rounded-2xl border border-panel_line shadow-panel"
         >
           <div className="relative aspect-[21/9] w-full">
             <Image
