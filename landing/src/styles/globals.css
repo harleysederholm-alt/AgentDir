@@ -18,10 +18,21 @@
     font-family: "Space Grotesk", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: #0f0f0f;
     background-image:
-      radial-gradient(circle at 15% 20%, rgba(211, 84, 0, 0.12), transparent 55%),
-      radial-gradient(circle at 85% 80%, rgba(44, 62, 80, 0.25), transparent 50%);
-    background-attachment: fixed;
+      linear-gradient(
+        180deg,
+        rgba(15, 15, 15, 0.72) 0%,
+        rgba(15, 15, 15, 0.82) 45%,
+        rgba(15, 15, 15, 0.92) 100%
+      ),
+      radial-gradient(circle at 15% 20%, rgba(211, 84, 0, 0.14), transparent 55%),
+      radial-gradient(circle at 85% 80%, rgba(44, 62, 80, 0.3), transparent 50%),
+      url("/achii-stage.jpg");
+    background-size: cover, auto, auto, cover;
+    background-position: center, center, center, center;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+    background-attachment: fixed, fixed, fixed, fixed;
   }
 
   ::selection {

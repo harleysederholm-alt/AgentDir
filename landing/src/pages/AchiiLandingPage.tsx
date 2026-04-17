@@ -45,7 +45,13 @@ export function AchiiLandingPage() {
       <header className="sticky top-0 z-50 border-b border-panel_oxidized/40 bg-base_bg/85 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="block h-2 w-2 rounded-full bg-accent_amber shadow-amber" />
+            <img
+              src="/achii-wrench.png"
+              alt="Achii"
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-sm shadow-amber"
+            />
             <span className="font-heading text-sm font-bold uppercase tracking-[0.3em] text-accent_amber">
               AgentDir
             </span>
@@ -193,8 +199,17 @@ export function AchiiLandingPage() {
       </section>
 
       <footer className="border-t border-panel_oxidized/40 bg-base_bg/70">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-6 font-code text-[11px] uppercase tracking-[0.22em] text-ink_muted sm:flex-row">
-          <span>AgentDir × Achii // Builder's Challenge 2026</span>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-6 font-code text-[11px] uppercase tracking-[0.22em] text-ink_muted sm:flex-row">
+          <span className="flex items-center gap-2">
+            <img
+              src="/achii-wrench.png"
+              alt="Achii"
+              width={20}
+              height={20}
+              className="h-5 w-5 rounded-sm"
+            />
+            AgentDir × Achii // Builder's Challenge 2026
+          </span>
           <span>Sovereign Engine · v4.1</span>
         </div>
       </footer>

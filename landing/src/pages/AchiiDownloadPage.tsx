@@ -6,13 +6,20 @@ export function AchiiDownloadPage() {
   return (
     <div className="flex min-h-screen flex-col items-center px-5 py-8 text-center">
       {/* BACK LINK */}
-      <header className="w-full max-w-md">
+      <header className="flex w-full max-w-md items-center justify-between">
         <Link
           to="/"
           className="inline-flex items-center gap-2 font-code text-[11px] uppercase tracking-[0.25em] text-ink_muted transition-colors hover:text-ink_soft"
         >
           <ArrowLeft size={14} /> Takaisin
         </Link>
+        <img
+          src="/achii-wrench.png"
+          alt="Achii"
+          width={24}
+          height={24}
+          className="h-6 w-6 rounded-sm"
+        />
       </header>
 
       {/* HERO */}
@@ -95,7 +102,8 @@ export function AchiiDownloadPage() {
       </section>
 
       <footer className="mt-14 flex w-full max-w-md items-center justify-between border-t border-panel_oxidized/40 pt-5 font-code text-[11px] uppercase tracking-[0.22em] text-ink_muted">
-        <span>
+        <span className="flex items-center gap-2">
+          <img src="/achii-wrench.png" alt="Achii" width={18} height={18} className="h-4 w-4" />
           <Zap size={12} className="mr-1 inline text-accent_amber" />
           Sovereign Engine
         </span>
