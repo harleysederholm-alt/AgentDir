@@ -1,8 +1,48 @@
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { ChatPanel } from "@/components/ChatPanel";
 import { StatusPill } from "@/components/StatusPill";
+import { OriginStory } from "@/components/OriginStory";
+import { STORY_SEEN_KEY } from "@/origin_story";
+
+type Phase = "loading" | "onboarding" | "nexus";
+
+function readSeen(): boolean {
+  try {
+    return window.localStorage.getItem(STORY_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeSeen(): void {
+  try {
+    window.localStorage.setItem(STORY_SEEN_KEY, "1");
+  } catch {
+    /* private mode / storage disabled — skip silently */
+  }
+}
 
 export default function App() {
+  const [phase, setPhase] = useState<Phase>("loading");
+
+  useEffect(() => {
+    setPhase(readSeen() ? "nexus" : "onboarding");
+  }, []);
+
+  const handleEngage = useCallback(() => {
+    writeSeen();
+    setPhase("nexus");
+  }, []);
+
+  if (phase === "loading") {
+    return <div className="app-container grain" aria-busy="true" />;
+  }
+
+  if (phase === "onboarding") {
+    return <OriginStory onEngage={handleEngage} />;
+  }
+
   return (
     <div className="app-container grain">
       <Header />

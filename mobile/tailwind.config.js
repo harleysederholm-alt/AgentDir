@@ -35,11 +35,19 @@ export default {
         caret: {
           "0%, 49%": { opacity: "1" },
           "50%, 100%": { opacity: "0" }
+        },
+        amberFlicker: {
+          "0%, 100%": { opacity: "0.92", filter: "hue-rotate(0deg)" },
+          "17%": { opacity: "0.72", filter: "hue-rotate(-3deg)" },
+          "38%": { opacity: "1", filter: "hue-rotate(2deg)" },
+          "61%": { opacity: "0.84", filter: "hue-rotate(-1deg)" },
+          "84%": { opacity: "0.96", filter: "hue-rotate(1deg)" }
         }
       },
       animation: {
         "pulse-amber": "amberPulse 1.8s ease-in-out infinite",
-        caret: "caret 1s steps(1) infinite"
+        caret: "caret 1s steps(1) infinite",
+        "amber-flicker": "amberFlicker 4.5s ease-in-out infinite"
       }
     }
   },
