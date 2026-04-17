@@ -68,9 +68,16 @@ export function OriginStory({ onEngage, fast = false }: Props) {
       };
     }
 
-    // Speech finished → advance after a short breath.
+    // Speech finished → either finalize (if last) or advance after a short breath.
+    // Defensive: if a future edit reorders ORIGIN_STORY to end on a speech line,
+    // we must still flip to "finished" so the CTA enables.
+    const isLast = segmentIdx === segments.length - 1;
     timerRef.current = window.setTimeout(
       () => {
+        if (isLast) {
+          setState("finished");
+          return;
+        }
         setSegmentIdx((i) => i + 1);
         setTypedLen(0);
       },

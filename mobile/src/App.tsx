@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Header } from "@/components/Header";
 import { ChatPanel } from "@/components/ChatPanel";
 import { StatusPill } from "@/components/StatusPill";
 import { OriginStory } from "@/components/OriginStory";
 import { STORY_SEEN_KEY } from "@/origin_story";
 
-type Phase = "loading" | "onboarding" | "nexus";
+type Phase = "onboarding" | "nexus";
 
 function readSeen(): boolean {
+  if (typeof window === "undefined") return false;
   try {
     return window.localStorage.getItem(STORY_SEEN_KEY) === "1";
   } catch {
@@ -24,20 +25,16 @@ function writeSeen(): void {
 }
 
 export default function App() {
-  const [phase, setPhase] = useState<Phase>("loading");
-
-  useEffect(() => {
-    setPhase(readSeen() ? "nexus" : "onboarding");
-  }, []);
+  // Lazy initializer — read localStorage synchronously on first render so the
+  // returning user never sees a flash of the onboarding shell.
+  const [phase, setPhase] = useState<Phase>(() =>
+    readSeen() ? "nexus" : "onboarding",
+  );
 
   const handleEngage = useCallback(() => {
     writeSeen();
     setPhase("nexus");
   }, []);
-
-  if (phase === "loading") {
-    return <div className="app-container grain" aria-busy="true" />;
-  }
 
   if (phase === "onboarding") {
     return <OriginStory onEngage={handleEngage} />;
