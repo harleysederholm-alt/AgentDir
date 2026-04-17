@@ -1,329 +1,806 @@
 #!/usr/bin/env python3
 """
-AgentDir 3.5 CLI — Sovereign Engine
-Käyttö: python cli.py <komento> [optiot]
+AgentDir CLI — Sovereign Engine.
 
-Aloituspiste kaikille AgentDir 3.5 -komennoille.
-Delegoi kaikki logiikka orkestraattorille ja workspace-moduuleille.
+Rebranded to the Achii harness visual identity (v1.0.4-beta "The Rusty
+Awakening"). Single entry point for both scripted invocations and the
+interactive REPL:
+
+    agentdir                       # launches the REPL
+    agentdir status                # one-shot command
+    agentdir --json status | jq    # machine-readable output
+    agentdir -v run "refactor"     # verbose cognitive trace
+
+Back-compat notes
+-----------------
+The pre-rebrand module exported ``cmd_status``, ``print_logo``,
+``_get_llm_and_rag``, ``main`` and ``execute_command``. All five remain
+here with the same call signatures; only their rendering changed.
 """
 from __future__ import annotations
 
 import argparse
-import sys
+import json
 import shlex
+import sys
+import time
 from pathlib import Path
+from typing import Any, Callable
 
-# Pakotetaan UTF-8 koodaus, jotta hienot ASCII-boxit toimivat Windows-terminaalissa
-if sys.stdout.encoding.lower() != 'utf-8':
+from cli_theme import (
+    AMBER,
+    BANNER_CODENAME,
+    BANNER_VERSION,
+    BOLD,
+    COPPER,
+    DIM,
+    ERR_RED,
+    INK,
+    MUTED,
+    OK_GREEN,
+    STEEL,
+    AchiiState,
+    banner,
+    kv,
+    paint,
+    prompt_prefix,
+    render_status_bar,
+    render_table,
+    rule,
+)
+
+# Pakotetaan UTF-8 koodaus, jotta box-drawing -merkit toimivat Windows-terminaalissa.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding="utf-8")
     except (AttributeError, Exception):
         pass
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Session state (Achii's vital signs across REPL turns)
+# ─────────────────────────────────────────────────────────────────────────────
 
-def cmd_status() -> str:
-    """
-    Palauttaa värikoodatun yleiskuvan moottorin tilasta.
-    Hakee tiedot suoraan moduuleista ja tiedostojärjestelmästä.
+_STATE = AchiiState()
+
+# Global flags are parsed once in main() and read everywhere.
+_VERBOSE = False
+_JSON = False
+
+
+def _eprint(*parts: str) -> None:
+    """Kirjoitetaan stderriin — ei häiritse --json-putkitusta."""
+    print(*parts, file=sys.stderr)
+
+
+def _vlog(label: str, detail: str) -> None:
+    """Verbose-logi: näkyy vain kun --verbose on käytössä."""
+    if not _VERBOSE:
+        return
+    _eprint(paint(f"[trace] {label}", DIM, MUTED) + " " + paint(detail, MUTED))
+
+
+def _emit(payload: dict[str, Any]) -> None:
+    """Tulosta JSON-objekti, kun --json on käytössä. Muutoin no-op."""
+    if not _JSON:
+        return
+    print(json.dumps(payload, ensure_ascii=False))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Engine introspection — lähteet: ollama, rag_memory, evolution_engine,
+#  Inbox/Outbox -kansio.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _collect_status() -> dict[str, Any]:
+    """Palauta konekieliversio engine-tilasta. Molemmat ``cmd_status`` (ihmistä
+    varten) ja ``cmd_status_json`` (putkitusta varten) kutsuvat tätä.
     """
     root = Path(".")
+    out: dict[str, Any] = {}
 
-    # Ollama-tila
+    # Ollama / paikallinen malli
     try:
         import subprocess
+
         result = subprocess.run(
             ["ollama", "list"], capture_output=True, text=True, timeout=5
         )
         model_ok = "gemma" in result.stdout.lower()
-        model_name = "gemma4:e4b" if model_ok else "ei löydy"
-    except Exception:
-        model_ok = False
-        model_name = "ollama offline"
-    model_icon = "\033[92m●\033[0m" if model_ok else "\033[91m●\033[0m"
+        out["model"] = {
+            "online": bool(model_ok),
+            "name": "gemma4:e4b" if model_ok else "ollama offline",
+        }
+    except Exception as exc:
+        out["model"] = {"online": False, "name": "ollama offline", "error": str(exc)}
 
-    # RAG-tila
+    # RAG-indeksi
     try:
-        import json as _json
-        cfg = _json.loads((root / "config.json").read_text(encoding="utf-8"))
+        cfg = json.loads((root / "config.json").read_text(encoding="utf-8"))
         from rag_memory import RAGMemory
-        rag = RAGMemory(cfg, memory_path=str(root / "memory"))
-        rag_docs = rag.count()
-    except Exception:
-        rag_docs = 0
-    rag_icon = "\033[92m●\033[0m" if rag_docs > 0 else "\033[93m●\033[0m"
 
-    # Evoluutio
+        rag = RAGMemory(cfg, memory_path=str(root / "memory"))
+        out["rag"] = {"documents": int(rag.count())}
+    except Exception as exc:
+        out["rag"] = {"documents": 0, "error": str(exc)}
+
+    # Evoluutio — prompttien versiointi
     try:
         from evolution_engine import EvolutionEngine
-        import json as _json
-        cfg = _json.loads((root / "config.json").read_text(encoding="utf-8"))
+
+        cfg = json.loads((root / "config.json").read_text(encoding="utf-8"))
         ev = EvolutionEngine(cfg, str(root / "config.json"))
-        stats = ev.get_stats()
-    except Exception:
-        stats = {"total_tasks": 0, "success_rate": 0.0, "prompt_version": "?"}
-    evo_tasks = stats.get("total_tasks", 0)
-    evo_rate = stats.get("success_rate", 0)
-    if isinstance(evo_rate, float) and evo_rate <= 1.0:
-        evo_rate = evo_rate * 100
-    evo_ver = stats.get("prompt_version", "?")
-    if evo_rate >= 70:
-        evo_icon = "\033[92m●\033[0m"
-    elif evo_rate >= 40:
-        evo_icon = "\033[93m●\033[0m"
-    else:
-        evo_icon = "\033[91m●\033[0m"
+        stats = ev.get_stats() or {}
+        rate = stats.get("success_rate", 0.0)
+        if isinstance(rate, float) and rate <= 1.0:
+            rate = rate * 100
+        out["evolution"] = {
+            "prompt_version": stats.get("prompt_version", "?"),
+            "total_tasks": int(stats.get("total_tasks", 0)),
+            "success_rate_pct": round(float(rate), 1),
+        }
+    except Exception as exc:
+        out["evolution"] = {
+            "prompt_version": "?",
+            "total_tasks": 0,
+            "success_rate_pct": 0.0,
+            "error": str(exc),
+        }
 
-    # Inbox/Outbox
-    inbox_count = len([f for f in (root / "Inbox").glob("*") if f.is_file() and f.name != ".gitkeep"])
-    outbox_count = len([f for f in (root / "Outbox").glob("*") if f.is_file() and f.name != ".gitkeep"])
+    # Inbox / Outbox — kansiotarkistus
+    out["inbox"] = _count_files(root / "Inbox")
+    out["outbox"] = _count_files(root / "Outbox")
 
-    return f"""
-\033[96m┌─ SOVEREIGN ENGINE STATUS ────────────────────────────────────┐\033[0m
-│                                                               │
-│  {model_icon} MODEL      {model_name:<44}│
-│  {rag_icon} RAG        {rag_docs} documents indexed{' '*(27 - len(str(rag_docs)))}│
-│  {evo_icon} EVOLUTION  {evo_ver} │ {evo_tasks} tasks │ {evo_rate:.0f}% success{' '*(14 - len(str(evo_tasks)))}│
-│                                                               │
-│  📥 INBOX    {inbox_count} pending{' '*(45 - len(str(inbox_count)))}│
-│  📤 OUTBOX   {outbox_count} completed{' '*(43 - len(str(outbox_count)))}│
-│                                                               │
-\033[96m└───────────────────────────────────────────────────────────────┘\033[0m
-"""
+    return out
+
+
+def _count_files(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return len([f for f in path.glob("*") if f.is_file() and f.name != ".gitkeep"])
+
+
+def _status_dot(condition: bool, warn_if: Callable[[], bool] | None = None) -> str:
+    """Kliininen ● / ○ -symboli condition-arvon mukaan."""
+    if condition:
+        return paint("●", OK_GREEN)
+    if warn_if and warn_if():
+        return paint("●", AMBER)
+    return paint("●", ERR_RED)
+
+
+def cmd_status() -> str:
+    """Ihmisluettava tilakortti. Palauttaa merkkijonon — ei tulosta itse.
+
+    Säilyttää tunnistuspalasen ``SOVEREIGN ENGINE STATUS`` jotta
+    olemassa olevat yksikkötestit tunnistavat raportin.
+    """
+    data = _collect_status()
+    m = data["model"]
+    r = data["rag"]
+    e = data["evolution"]
+
+    rows = [
+        [
+            _status_dot(bool(m["online"])),
+            paint("MODEL", BOLD, STEEL),
+            paint(m["name"], INK),
+        ],
+        [
+            _status_dot(r["documents"] > 0, warn_if=lambda: r["documents"] == 0),
+            paint("RAG", BOLD, STEEL),
+            paint(f"{r['documents']} documents indexed", INK),
+        ],
+        [
+            _status_dot(
+                e["success_rate_pct"] >= 70,
+                warn_if=lambda: e["success_rate_pct"] >= 40,
+            ),
+            paint("EVOLUTION", BOLD, STEEL),
+            paint(
+                f"{e['prompt_version']}  |  "
+                f"{e['total_tasks']} tasks  |  "
+                f"{e['success_rate_pct']:.0f}% success",
+                INK,
+            ),
+        ],
+        [
+            paint("·", DIM, STEEL),
+            paint("INBOX", BOLD, STEEL),
+            paint(f"{data['inbox']} pending", INK),
+        ],
+        [
+            paint("·", DIM, STEEL),
+            paint("OUTBOX", BOLD, STEEL),
+            paint(f"{data['outbox']} completed", INK),
+        ],
+    ]
+
+    table = render_table(
+        headers=["", "COMPONENT", "SOVEREIGN ENGINE STATUS"],
+        rows=rows,
+    )
+    return "\n" + table + "\n"
+
+
+def cmd_status_json() -> str:
+    """Konekieliversio. Käytetään ``agentdir --json status``:in yhteydessä."""
+    return json.dumps({"command": "status", "engine": _collect_status()}, ensure_ascii=False)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Logo + help (back-compat: print_logo has the same name + side-effect as
+#  before; tests can still assert on its capsys output).
+# ─────────────────────────────────────────────────────────────────────────────
 
 def print_logo() -> None:
-    print("\033[96m")
-    print(r"╔═══════════════════════════════════════════════════════════════╗")
-    print(r"║                                                               ║")
-    print(r"║    ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ █▀▄ █ █▀█                           ║")
-    print(r"║    █▀█ █▄█ ██▄ █ ▀█  █  █▄▀ █ █▀▄                           ║")
-    print(r"║                                                               ║")
-    print(r"║    SOVEREIGN ENGINE  3.5.1 ·  LOCAL-FIRST  ·  GEMMA4          ║")
-    print(r"║    ─────────────────────────────────────────────────────     ║")
-    print(r"║    Type  'help'  for commands  │  'status'  for telemetry    ║")
-    print(r"║    'hermes'  research  │  'openclaw'  deep analysis          ║")
-    print(r"║                                                               ║")
-    print(r"╚═══════════════════════════════════════════════════════════════╝" + "\033[0m")
-    print()
+    """Tulostaa käynnistysbannerin + lyhyen versio-tagin stdoutiin."""
+    print(banner(BANNER_VERSION, BANNER_CODENAME))
+    # Lyhyt yhteenveto komennoista samalle outputille (jotta
+    # olemassa olevat testit tunnistavat 'hermes' ja 'openclaw' -merkkijonot).
+    print(
+        paint(
+            f"sovereign engine {BANNER_VERSION}  ·  "
+            f"commands: run · init · hermes · openclaw · benchmark · "
+            f"/status · /harness · /clean · /attach · /logs",
+            DIM,
+            MUTED,
+        )
+    )
 
+
+def _print_help() -> None:
+    lines = [
+        paint("  Slash-komennot (REPL)", BOLD, COPPER),
+        kv(
+            [
+                ("/status", "Näytä moottorin tila (model · RAG · evolution · IO)"),
+                ("/harness", "Listaa aktiiviset valjaat /workflows ja .yaml:sta"),
+                ("/clean", "Nollaa konteksti-ikkuna ja tyhjennä ruutu"),
+                ("/attach <tiedosto>", "Liitä .yaml tai .md cognitiiviseen scaffoldiin"),
+                ("/logs [--tail N]", "Näytä viimeisimmät auditoitavat lokit (N=20)"),
+            ],
+        ),
+        "",
+        paint("  Workflow-komennot", BOLD, COPPER),
+        kv(
+            [
+                ('run "tehtävä"', "Aja orkestroitu tehtävä (--mode openclaw|hermes)"),
+                ('hermes "kysymys"', "Iteratiivinen tutkimus"),
+                ('openclaw "task"', "Syväanalyysi"),
+                ("benchmark", "Suorituskykytestit (inference latency, tok/s)"),
+                ("init [--path]", "Alusta AgentDir-rakenne kansioon"),
+                ("print [--task-id]", "Näytä Agent Print -raportti"),
+            ],
+        ),
+        "",
+        paint("  Globaalit liput", BOLD, COPPER),
+        kv(
+            [
+                ("-v / --verbose", "Näytä kognitiivinen prosessitrace (.yaml-rajaus)"),
+                ("--json", "Konekieliversio putkitukseen (jq, yq, …)"),
+                ("exit / quit", "Sulje REPL"),
+            ],
+        ),
+        "",
+    ]
+    print("\n".join(lines))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Shared helpers — lazy import to keep `agentdir --help` snappy.
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _get_llm_and_rag():
-    """Luo jaetut LLM- ja RAG-instanssit työnkuluille."""
-    import json
+    """Luo jaetut LLM- ja RAG-instanssit workflow-ajoille."""
     cfg = json.loads(Path("config.json").read_text(encoding="utf-8"))
     from llm_client import LLMClient
     from rag_memory import RAGMemory
+
     llm = LLMClient(cfg)
     rag = RAGMemory(cfg, memory_path="memory")
     return llm, rag, cfg
 
 
 def _run_hermes(query: str) -> None:
-    """Aja Hermes-iteratiivinen tutkimus suoraan REPL:stä."""
     import asyncio
-    print(f"\n\033[95m[Hermes] Aloitetaan iteratiivinen tutkimus...\033[0m")
+
+    _eprint(paint("[hermes] iteratiivinen tutkimus käynnistyy", COPPER, BOLD))
     try:
         llm, rag, _ = _get_llm_and_rag()
         from workflows.hermes import HermesWorkflow
+
         wf = HermesWorkflow(llm, rag)
+        started = time.monotonic()
         result = asyncio.run(wf.run(query, max_iterations=3))
-        print(f"\n\033[92m[Hermes] Tulos:\033[0m\n{result}\n")
-    except Exception as e:
-        print(f"\033[91m[Hermes] Virhe: {e}\033[0m\n")
+        _STATE.inference_ms = int((time.monotonic() - started) * 1000)
+        _STATE.achii = "AWAKE"
+        if _JSON:
+            _emit({"command": "hermes", "query": query, "result": result})
+        else:
+            print(rule("hermes · tulos"))
+            print(result)
+    except Exception as exc:
+        _eprint(paint(f"[hermes] virhe: {exc}", ERR_RED, BOLD))
 
 
 def _run_openclaw(task: str) -> None:
-    """Aja OpenClaw-syväanalyysi suoraan REPL:stä."""
     import asyncio
-    print(f"\n\033[96m[OpenClaw] Aloitetaan monivaiheinen syväanalyysi...\033[0m")
+
+    _eprint(paint("[openclaw] monivaiheinen syväanalyysi käynnistyy", COPPER, BOLD))
     try:
         llm, rag, _ = _get_llm_and_rag()
         from workflows.openclaw import OpenClawWorkflow
+
         wf = OpenClawWorkflow(llm, rag)
+        started = time.monotonic()
         result = asyncio.run(wf.run(task))
-        print(f"\n\033[92m[OpenClaw] Tulos:\033[0m\n{result}\n")
-    except Exception as e:
-        print(f"\033[91m[OpenClaw] Virhe: {e}\033[0m\n")
+        _STATE.inference_ms = int((time.monotonic() - started) * 1000)
+        _STATE.achii = "AWAKE"
+        if _JSON:
+            _emit({"command": "openclaw", "task": task, "result": result})
+        else:
+            print(rule("openclaw · tulos"))
+            print(result)
+    except Exception as exc:
+        _eprint(paint(f"[openclaw] virhe: {exc}", ERR_RED, BOLD))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Slash-command handlers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _slash_status(_arg: str) -> None:
+    if _JSON:
+        print(cmd_status_json())
+        return
+    print(cmd_status())
+
+
+def _slash_harness(_arg: str) -> None:
+    """Skannaa .yaml-valjaat ja aktiiviset workflow-moduulit."""
+    yamls = sorted(
+        list(Path("workflows").glob("*.yaml"))
+        + list(Path("workflows").glob("*.yml"))
+        + list(Path(".prompts").glob("*.yaml"))
+    )
+    workflow_modules: list[str] = []
+    try:
+        import workflows as wf_pkg  # type: ignore
+
+        wf_dir = Path(wf_pkg.__file__).parent if wf_pkg.__file__ else None
+        if wf_dir is not None:
+            workflow_modules = [p.stem for p in wf_dir.glob("*.py") if p.stem != "__init__"]
+    except Exception:
+        pass
+
+    if _JSON:
+        print(
+            json.dumps(
+                {
+                    "command": "harness",
+                    "yaml_harnesses": [str(p) for p in yamls],
+                    "workflow_modules": workflow_modules,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return
+
+    rows: list[list[str]] = []
+    for p in yamls:
+        size = f"{p.stat().st_size} B"
+        rows.append([
+            paint(p.name, INK),
+            paint(str(p.parent), DIM, STEEL),
+            paint("yaml", COPPER),
+            paint(size, STEEL),
+        ])
+    for mod in workflow_modules:
+        rows.append([
+            paint(f"{mod}.py", INK),
+            paint("workflows", DIM, STEEL),
+            paint("python", AMBER),
+            paint("module", STEEL),
+        ])
+    if not rows:
+        print(paint("  ei aktiivisia valjaita — aja /attach <tiedosto.yaml>", DIM, MUTED))
+        return
+    print(render_table(["ARTIFACT", "PATH", "KIND", "SIZE"], rows))
+
+
+def _slash_clean(_arg: str) -> None:
+    """Tyhjennä ruutu ja nollaa RAM-puolelle ladattu konteksti."""
+    if sys.stdout.isatty():
+        sys.stdout.write("\x1b[2J\x1b[H")
+        sys.stdout.flush()
+    _STATE.inference_ms = 0
+    _STATE.tokens_per_s = 0.0
+    _STATE.entropy = 0.0
+    if _JSON:
+        _emit({"command": "clean", "reset": True})
+        return
+    _eprint(paint("  konteksti-ikkuna tyhjennetty. harness pysyy engagedina.", DIM, MUTED))
+
+
+def _slash_attach(arg: str) -> None:
+    """Liitä .yaml tai .md tiedosto cognitive scaffoldiin."""
+    target = arg.strip().strip('"').strip("'")
+    if not target:
+        _eprint(paint("  käyttö: /attach <polku.yaml | polku.md>", ERR_RED))
+        return
+    path = Path(target)
+    if not path.exists():
+        _eprint(paint(f"  virhe: tiedostoa ei ole olemassa: {path}", ERR_RED))
+        return
+    if path.suffix not in {".yaml", ".yml", ".md"}:
+        _eprint(
+            paint(
+                f"  harness hylkäsi: vain .yaml (logiikka) ja .md (konteksti) "
+                f"sallitaan, ei {path.suffix}",
+                ERR_RED,
+            )
+        )
+        return
+    size = path.stat().st_size
+    kind = "LOGIC (.yaml)" if path.suffix in {".yaml", ".yml"} else "CONTEXT (.md)"
+
+    # Staattinen entropia-arvio: .yaml on deterministinen (matala),
+    # .md on rikkaampi konteksti (korkeampi).
+    _STATE.entropy = 0.08 if path.suffix in {".yaml", ".yml"} else 0.34
+    _STATE.harness = "ENGAGED"
+
+    if _JSON:
+        print(
+            json.dumps(
+                {
+                    "command": "attach",
+                    "path": str(path),
+                    "kind": kind,
+                    "size_bytes": size,
+                    "entropy": _STATE.entropy,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return
+
+    print(render_table(
+        headers=["ATTACHMENT", "KIND", "SIZE", "ENTROPY"],
+        rows=[[
+            paint(str(path), INK),
+            paint(kind, COPPER),
+            paint(f"{size} B", STEEL),
+            paint(f"{_STATE.entropy:.2f}", AMBER),
+        ]],
+    ))
+
+
+def _slash_logs(arg: str) -> None:
+    """Viimeisimmät auditoitavat lokimerkinnät evolution_log / outputs -kansiosta."""
+    tail = 20
+    parts = arg.split()
+    if "--tail" in parts:
+        i = parts.index("--tail")
+        if i + 1 < len(parts):
+            try:
+                tail = max(1, int(parts[i + 1]))
+            except ValueError:
+                pass
+
+    entries: list[dict[str, Any]] = []
+    log_path = Path("evolution_log.jsonl")
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").splitlines()[-tail:]:
+            try:
+                entries.append(json.loads(line))
+            except Exception:
+                entries.append({"raw": line})
+
+    reports = sorted(Path("outputs").glob("agent_print_*.json"))[-tail:]
+    for r in reports:
+        try:
+            data = json.loads(r.read_text(encoding="utf-8"))
+            entries.append({
+                "source": "agent_print",
+                "file": r.name,
+                "task_id": data.get("task_id"),
+                "success": data.get("success"),
+            })
+        except Exception:
+            continue
+
+    if _JSON:
+        print(json.dumps({"command": "logs", "tail": tail, "entries": entries}, ensure_ascii=False))
+        return
+
+    if not entries:
+        print(paint("  ei lokimerkintöjä. aja /harness tai `run` aloittaaksesi.", DIM, MUTED))
+        return
+
+    print(rule(f"logs · viimeiset {len(entries)} merkintää"))
+    for e in entries:
+        if "raw" in e:
+            print(paint("  " + e["raw"], DIM, MUTED))
+            continue
+        ts = e.get("ts") or e.get("timestamp") or "-"
+        msg = (
+            e.get("message")
+            or e.get("event")
+            or e.get("task_id")
+            or e.get("file")
+            or json.dumps({k: v for k, v in e.items() if k != "raw"}, ensure_ascii=False)
+        )
+        print("  " + paint(str(ts), DIM, STEEL) + "  " + paint(str(msg), INK))
+
+
+_SLASH: dict[str, Callable[[str], None]] = {
+    "/status": _slash_status,
+    "/harness": _slash_harness,
+    "/clean": _slash_clean,
+    "/attach": _slash_attach,
+    "/logs": _slash_logs,
+}
+
+
+def dispatch_slash(line: str) -> bool:
+    """Yritä tulkita syöte slash-komentona. Palauta True jos dispatchattiin."""
+    stripped = line.strip()
+    if not stripped.startswith("/"):
+        return False
+    head, _, rest = stripped.partition(" ")
+    handler = _SLASH.get(head)
+    if handler is None:
+        _eprint(
+            paint(f"  tuntematon slash-komento: {head}. yritä: ", ERR_RED)
+            + paint(" ".join(sorted(_SLASH.keys())), DIM, MUTED)
+        )
+        return True
+    handler(rest)
+    return True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  REPL
+# ─────────────────────────────────────────────────────────────────────────────
 
 def repl_mode(parser: argparse.ArgumentParser) -> None:
     print_logo()
-    print("Tervetuloa Sovereign CLI -tilaan. Kirjoita 'help' nähdäksesi komennot tai 'exit' poistuaksesi.")
+    _STATE.harness = "ENGAGED"
+    _STATE.achii = "AWAKE"
+
     while True:
         try:
-            # Käytetään vihreää promptia
-            user_input = input("\033[92mAgentDir>\033[0m ").strip()
+            if sys.stdout.isatty() and not _JSON:
+                print(render_status_bar(_STATE))
+            user_input = input(prompt_prefix(_STATE)).strip()
             if not user_input:
                 continue
             if user_input.lower() in ("exit", "quit"):
-                print("Lopetetaan Sovereign CLI. Näkemiin.")
+                print(paint("  harness disengaged. näkemiin.", DIM, MUTED))
                 break
 
-            # Suorat REPL-komennot (ei tarvitse argparsea)
-            if user_input.lower() == "status":
-                print(cmd_status())
-                continue
-            if user_input.lower() == "plugins":
-                import hooks
-                print("\n[\033[96mSOVEREIGN PLUGINS\033[0m]")
-                # Count plugins based on active listeners
-                active_hooks_count = sum(len(h) for h in hooks._hooks.values())
-                print(f" Aktiiviset Hook-tapahtumat: {active_hooks_count}")
-                
-                # Find plugin scripts loaded in memory
-                import sys
-                plugins = [m for m in sys.modules.keys() if m.startswith("agentdir_plugin_")]
-                
-                if not plugins:
-                    print(" Ei ladattuja yhteisölaajennuksia.\n Laita .py-skriptejä plugins/ -kansioon.")
-                else:
-                    for p in plugins:
-                        clean_name = p.replace("agentdir_plugin_", "")
-                        print(f"  \033[92m•\033[0m {clean_name}")
-                print()
-                continue
-            if user_input.lower() == "help":
-                print("\033[96m")
-                print("  Komennot:")
-                print("  ─────────────────────────────────────────")
-                print('  run "tehtävä"    — Suorita tehtävä LLM:llä')
-                print('  hermes "kysymys" — Iteratiivinen tutkimus (Hermes)')
-                print('  openclaw "task"  — Syväanalyysi (OpenClaw)')
-                print("  status           — Näytä moottorin tila")
-                print("  print            — Näytä viimeisin Agent Print")
-                print("  benchmark        — Aja suorituskykytestit")
-                print("  init             — Alusta projektirakenne")
-                print("  exit / quit      — Sulje CLI")
-                print("\033[0m")
+            if dispatch_slash(user_input):
                 continue
 
-            # Hermes: iteratiivinen tutkimus
+            if user_input.lower() == "status":
+                _slash_status("")
+                continue
+
+            if user_input.lower() in ("help", "?"):
+                _print_help()
+                continue
+
+            if user_input.lower() == "plugins":
+                import hooks
+
+                active_hooks_count = sum(len(h) for h in hooks._hooks.values())
+                plugins = [m for m in sys.modules.keys() if m.startswith("agentdir_plugin_")]
+                print(rule("sovereign plugins"))
+                print(kv([
+                    ("aktiiviset hook-tapahtumat", str(active_hooks_count)),
+                    (
+                        "yhteisölaajennukset",
+                        str(len(plugins)) if plugins
+                        else "ei ladattuja · lisää .py plugins/-kansioon",
+                    ),
+                ]))
+                for p in plugins:
+                    print(
+                        "  "
+                        + paint("·", COPPER)
+                        + " "
+                        + paint(p.replace("agentdir_plugin_", ""), INK)
+                    )
+                continue
+
             if user_input.lower().startswith("hermes "):
                 query = user_input[7:].strip().strip('"')
                 if query:
                     _run_hermes(query)
                 else:
-                    print("Käyttö: hermes \"tutkimuskysymys\"")
+                    _eprint(paint('käyttö: hermes "tutkimuskysymys"', DIM, MUTED))
                 continue
 
-            # OpenClaw: syväanalyysi
             if user_input.lower().startswith("openclaw "):
                 task = user_input[9:].strip().strip('"')
                 if task:
                     _run_openclaw(task)
                 else:
-                    print('Käyttö: openclaw "analyysitehtävä"')
+                    _eprint(paint('käyttö: openclaw "analyysitehtävä"', DIM, MUTED))
                 continue
 
-            # Ohitetaan parserin sys.exit(), kun annetaan virheellinen komento REPL:ssä
+            # Delegoi loput argparse-parserille (run, init, benchmark, print…)
             args_list = shlex.split(user_input)
             try:
                 args = parser.parse_args(args_list)
                 execute_command(args, parser)
             except SystemExit:
-                pass  # argparse heittää SystemExit virheistä
+                pass
         except (KeyboardInterrupt, EOFError):
-            print("\nLopetetaan Sovereign CLI.")
+            print("\n" + paint("  harness disengaged. näkemiin.", DIM, MUTED))
             break
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Argument parser + execute
+# ─────────────────────────────────────────────────────────────────────────────
 
-def main() -> None:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agentdir",
-        description="AgentDir 3.5 Sovereign Engine — kognitiivinen tiedostojärjestelmä",
+        description=(
+            "AgentDir Sovereign Engine — lokaali harness-arkkitehtuuri. "
+            ".yaml = logiikka, .md = konteksti."
+        ),
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="näytä kognitiivinen prosessitrace (.yaml-rajaukset reaaliajassa)",
+    )
+    parser.add_argument(
+        "--json",
+        dest="json_output",
+        action="store_true",
+        help="emit konekieliversio (putkitettavaksi jq:lle)",
     )
     sub = parser.add_subparsers(dest="command")
 
-    # --- RUN ---
-    run_p = sub.add_parser("run", help="Suorita tehtävä")
-    run_p.add_argument("task", help="Tehtävän kuvaus")
+    run_p = sub.add_parser("run", help="aja orkestroitu tehtävä")
+    run_p.add_argument("task", help="tehtävän kuvaus")
     run_p.add_argument(
         "--mode",
         choices=["openclaw", "hermes"],
         default="openclaw",
-        help="Workflow-moodi (oletus: openclaw)",
+        help="workflow-moodi (oletus: openclaw)",
     )
     run_p.add_argument(
         "--model",
         default="auto",
-        help="Mallitunnus tai 'auto' (ModelRouter valitsee)",
+        help="mallitunnus tai 'auto' (ModelRouter valitsee)",
     )
 
-    # --- INIT ---
-    init_p = sub.add_parser("init", help="Alusta AgentDir 3.5 -rakenne kansioon")
-    init_p.add_argument(
-        "--path",
-        default=".",
-        help="Kohdehakemisto (oletus: nykyinen)",
-    )
+    init_p = sub.add_parser("init", help="alusta AgentDir-rakenne kansioon")
+    init_p.add_argument("--path", default=".", help="kohdehakemisto (oletus: nykyinen)")
 
-    # --- STATUS ---
-    sub.add_parser("status", help="Näytä parven ja solmujen tila")
+    sub.add_parser("status", help="tulosta moottorin tila")
+    sub.add_parser("benchmark", help="aja suorituskykytestit")
+    sub.add_parser("harness", help="listaa aktiiviset .yaml-valjaat")
+    sub.add_parser("clean", help="tyhjennä konteksti-ikkuna")
 
-    # --- BENCHMARK ---
-    sub.add_parser("benchmark", help="Aja suorituskykytestit")
+    attach_p = sub.add_parser("attach", help="liitä .yaml / .md cognitive scaffoldiin")
+    attach_p.add_argument("path", help="polku tiedostoon")
 
-    # --- PRINT ---
-    print_p = sub.add_parser("print", help="Generoi Agent Print -raportti")
-    print_p.add_argument("--task-id", default="latest", help="Tehtävän ID tai 'latest'")
+    logs_p = sub.add_parser("logs", help="näytä viimeisimmät lokimerkinnät")
+    logs_p.add_argument("--tail", type=int, default=20, help="rivien määrä (oletus: 20)")
 
-    # Estetään argparsea kaatamasta REPLiä oletuksena
+    print_p = sub.add_parser("print", help="tulosta Agent Print -raportti")
+    print_p.add_argument("--task-id", default="latest", help="tehtävän ID tai 'latest'")
+
     parser.exit_on_error = False
+    return parser
 
-    # Jos argumentteja ei annettu komentoriviltä, käynnistä REPL
-    if len(sys.argv) == 1:
+
+def main(argv: list[str] | None = None) -> None:
+    global _VERBOSE, _JSON  # noqa: PLW0603
+
+    parser = _build_parser()
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    if not argv:
         repl_mode(parser)
         return
 
     try:
-        args = parser.parse_args()
-        execute_command(args, parser)
+        args = parser.parse_args(argv)
     except SystemExit:
-        pass
+        return
+    except argparse.ArgumentError as exc:
+        _eprint(paint(f"argument error: {exc}", ERR_RED))
+        return
+
+    _VERBOSE = bool(getattr(args, "verbose", False))
+    _JSON = bool(getattr(args, "json_output", False))
+
+    _vlog("harness", f"mode={getattr(args, 'mode', '-')} json={_JSON} verbose={_VERBOSE}")
+
+    execute_command(args, parser)
+
 
 def execute_command(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    if getattr(args, "command", None) == "run":
+    cmd = getattr(args, "command", None)
+
+    if cmd == "run":
         from orchestrator import WorkflowOrchestrator
 
-        print(f"\n\033[96m[Sovereign] Suoritetaan tehtävä (Mode: {args.mode}, Model: {args.model})\033[0m")
+        _vlog("run", f'mode={args.mode} model={args.model} task="{args.task[:60]}"')
+        _eprint(paint(f"[sovereign] mode={args.mode} model={args.model}", COPPER, BOLD))
         orch = WorkflowOrchestrator(mode=args.mode)
+        started = time.monotonic()
         result = orch.run(task=args.task, model=args.model)
-        print(f"\n\033[92m[Tulokset]\033[0m\n{result.get('summary', 'Ei tulosta.')}\n")
+        _STATE.inference_ms = int((time.monotonic() - started) * 1000)
+        if _JSON:
+            print(json.dumps({"command": "run", "result": result}, ensure_ascii=False))
+        else:
+            print(rule("run · tulos"))
+            print(result.get("summary", "ei tulosta."))
+        return
 
-    elif getattr(args, "command", None) == "init":
+    if cmd == "init":
         from workspace.init_structure import init_project
 
         init_project(args.path)
+        if _JSON:
+            print(json.dumps({"command": "init", "path": args.path, "ok": True}, ensure_ascii=False))
+        return
 
-    elif getattr(args, "command", None) == "status":
-        from orchestrator import WorkflowOrchestrator
+    if cmd == "status":
+        if _JSON:
+            print(cmd_status_json())
+        else:
+            print(cmd_status())
+        return
 
-        orch = WorkflowOrchestrator()
-        orch.status()
-
-    elif getattr(args, "command", None) == "benchmark":
+    if cmd == "benchmark":
         from workspace.benchmark import run_benchmarks
 
         run_benchmarks()
+        return
 
-    elif getattr(args, "command", None) == "print":
-        from workspace.agent_print import AgentPrint
+    if cmd == "harness":
+        _slash_harness("")
+        return
 
-        ap = AgentPrint()
-        # Näytä viimeisin raportti tulostekansiosta
-        import json
-        from pathlib import Path
+    if cmd == "clean":
+        _slash_clean("")
+        return
 
+    if cmd == "attach":
+        _slash_attach(args.path)
+        return
+
+    if cmd == "logs":
+        _slash_logs(f"--tail {args.tail}")
+        return
+
+    if cmd == "print":
         reports = sorted(Path("outputs").glob("agent_print_*.json"))
-        if reports:
-            data = json.loads(reports[-1].read_text(encoding="utf-8"))
-            for k, v in data.items():
-                print(f"  {k}: {v}")
-        else:
-            print("Ei Agent Print -raportteja outputs/ -kansiossa.")
+        if not reports:
+            _eprint(paint("ei Agent Print -raportteja outputs/-kansiossa.", DIM, MUTED))
+            return
+        data = json.loads(reports[-1].read_text(encoding="utf-8"))
+        if _JSON:
+            print(json.dumps({"command": "print", "data": data}, ensure_ascii=False))
+            return
+        print(rule(f"agent print · {reports[-1].name}"))
+        print(kv([(str(k), str(v)) for k, v in data.items()]))
+        return
 
-    else:
-        parser.print_help()
+    # Ei komentoa: näytä banner + help
+    print_logo()
+    _print_help()
 
 
 if __name__ == "__main__":

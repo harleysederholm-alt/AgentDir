@@ -48,9 +48,12 @@ class TestCLILogo:
 
     def test_logo_shows_correct_version(self, capsys):
         from cli import print_logo
+        from cli_theme import BANNER_VERSION
         print_logo()
         captured = capsys.readouterr()
-        assert "3.5.1" in captured.out
+        assert BANNER_VERSION in captured.out
+        # Sisältää codename-leiman ("The Rusty Awakening")
+        assert "rusty" in captured.out.lower()
 
     def test_logo_shows_hermes_and_openclaw(self, capsys):
         from cli import print_logo
