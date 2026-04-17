@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #0f0f0f;
+  color: #e8e5de;
+}
+
+::selection {
+  background: #f39c12;
+  color: #0f0f0f;
+}
+
+/* Subtle film grain over the whole surface — adds theater depth without cost. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.35'/></svg>");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+}
+
+@layer components {
+  .copper-cta {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent_copper px-5 py-3 font-display font-semibold tracking-wide text-white shadow-copper transition hover:bg-accent_amber hover:text-base_bg focus:outline-none focus:ring-2 focus:ring-accent_amber/60;
+  }
+
+  .ghost-cta {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-panel_blue/70 bg-transparent px-5 py-3 font-display font-semibold tracking-wide text-ink_soft transition hover:border-accent_amber/80 hover:text-accent_amber focus:outline-none focus:ring-2 focus:ring-accent_amber/40;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.22em] text-accent_amber;
+  }
+
+  .panel {
+    @apply rounded-xl border border-panel_line bg-panel_fill/70 backdrop-blur-md shadow-panel;
+  }
+
+  .section-pad {
+    @apply px-6 md:px-10 lg:px-16 xl:px-20;
+  }
+
+  .text-glow-amber {
+    text-shadow: 0 0 22px rgba(243, 156, 18, 0.35);
+  }
+
+  .mask-radial {
+    -webkit-mask-image: radial-gradient(
+      75% 70% at 50% 50%,
+      black 55%,
+      transparent 100%
+    );
+    mask-image: radial-gradient(
+      75% 70% at 50% 50%,
+      black 55%,
+      transparent 100%
+    );
+  }
+}
