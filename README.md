@@ -1,7 +1,9 @@
 <div align="center">
-  <img src="docs/agentdir_logo_v3.png" alt="AgentDir Sovereign Engine" width="420"/>
+  <img src="docs/achii_wrench_lightbulb.png" alt="AgentDir · Achii Harness — a rusted wrench cradling a warm filament bulb, signalling patient engineering and hard-won light" width="320"/>
 
   <h1>AgentDir Sovereign Engine</h1>
+
+  <p><em>The model is a commodity. The harness is the product.</em></p>
 
   <p><strong>The deterministic cognitive harness for local AI.</strong><br>
   Every folder is an autonomous agent. Every device is a compute node.
