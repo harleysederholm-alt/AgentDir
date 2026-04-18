@@ -1,6 +1,13 @@
 """
-OpenClaw - Syväanalyyttinen, monivaiheinen päättelytila raskaille RAG-hauille.
-Käytetään kun perinteinen 1-shot (watcher.py) ei riitä monimutkaisissa tehtävissä.
+OpenClaw — **Internal** multi-stage deep-analysis workflow.
+
+NOT an external Agent-to-Agent protocol. Runs inside this process under
+``orchestrator.WorkflowOrchestrator`` and drives a three-stage cycle:
+problem decode → deep RAG retrieval → synthesis. Used when the default
+1-shot path in ``watcher.py`` is not enough for a complex task.
+
+External agent-to-agent messaging lives in ``a2a_protocol.py`` — see
+``docs/04-Architecture/API_SYMBIOSIS.md`` §5.
 """
 
 import asyncio

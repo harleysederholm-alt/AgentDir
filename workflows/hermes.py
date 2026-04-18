@@ -1,6 +1,14 @@
 """
-Hermes - Jatkuvan tutkimuksen moodi
-Suorittaa iteratiivista tiedonhakua kunnes löytää vastauksen.
+Hermes — **Internal** iterative-research workflow.
+
+NOT an external Agent-to-Agent protocol. Runs inside this process under
+``orchestrator.WorkflowOrchestrator`` and executes a cycle of
+RAG lookup → LLM reasoning → hypothesis refinement until the model
+emits ``LOPULLINEN VASTAUS:`` or ``max_iterations`` is reached.
+
+External agent-to-agent messaging lives in ``a2a_protocol.py`` and is a
+different concept entirely — see
+``docs/04-Architecture/API_SYMBIOSIS.md`` §5.
 """
 
 import asyncio
