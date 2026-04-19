@@ -1,35 +1,39 @@
 <div align="center">
-  <img src="docs/agentdir_logo_v3.png" alt="AgentDir Sovereign Engine Logo" width="500"/>
+  <img src="docs/agentdir_logo_v3.png" alt="AgentDir x Achii Logo" width="500"/>
 
-  <h1>🧬 AgentDir Sovereign Engine 4.0 (Edge Architecture)</h1>
+  <h1>🦄 AgentDir x Achii: Sovereign AI Engine v4.2</h1>
+  <h3><em>"The Rusty Awakening"</em></h3>
 
-  <p><strong>Maailmanluokan 100% lokaali asynkroninen tekoäly-ekosysteemi.</strong><br>
-  Tuo autonomiset tekoälyagentit suoraan tiedostojärjestelmään ja ohjaa laskenta lennosta kytkettäviin Edge-laitteisiin.</p>
+  <p><strong>Maailman ensimmäinen 100% lokaali autonominen tekoäly-ekosysteemi, jossa on sielu.</strong><br>
+  Tuo autonomiset tekoälyagentit suoraan tiedostojärjestelmään, ohjaa laskenta Edge-laitteisiin ja anna Achiin pitää huolta kaikesta.</p>
 
   <h3>👉 <a href="QUICKSTART.md">Pika-aloitus (3 min)</a> 👈</h3>
 
   <p>
     <a href="https://github.com/harleysederholm-alt/AgentDir/actions/workflows/ci.yml"><img src="https://github.com/harleysederholm-alt/AgentDir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
-    <img src="https://img.shields.io/badge/Release-v4.0%20Stable-gold" alt="Version">
+    <img src="https://img.shields.io/badge/Release-v4.2.0%20Stable-gold" alt="Version">
     <img src="https://img.shields.io/badge/AI_Engine-Gemma_4-purple" alt="Gemma4">
-    <img src="https://img.shields.io/badge/Edge_Compute-E2B%20%2F%20E4B-orange" alt="Edge">
-    <img src="https://img.shields.io/badge/Security-Win_Sandbox-red" alt="Sandbox">
+    <img src="https://img.shields.io/badge/Edge_Compute-OmniNode-orange" alt="OmniNode">
+    <img src="https://img.shields.io/badge/Security-Zero_Cloud_Egress-red" alt="Security">
+    <img src="https://img.shields.io/badge/Personality-Achii_Needy_Loop-00C2A8" alt="Achii">
   </p>
 </div>
 
 ---
 
-## 🚀 Vision: AI-Native Distributed Ecosystem
+## 🦄 The Sovereign Unicorn Vision
 
-**Jokainen kansio on itsenäinen, oppiva tekoälyagentti – ja jokainen laite on laskentasolmu.**
+**AgentDir x Achii** ei ole vain tekoälytyökalu — se on **Sovereign AI Operating System**, joka haastaa pilvijätit kolmella pilarilla:
 
-AgentDir Sovereign Engine 4.0 on täydellinen asynkroninen tekoäly-ohjelmistoarkkitehtuuri. Se muuttaa paikallisen hakemistosi älykkääksi reaktoriksi: Pudota tiedosto `Inbox/`-kansioon → Agentti herää lennosta, tutkii (Hermes), analysoi (OpenClaw), suorittaa koodin turvallisessa hiekkalaatikossa (Win Sandbox) ja palauttaa validoidun raportin. Yksikään tavu ei poistu lokaalista ympäristöstäsi.
+| Pilari | Kuvaus |
+|--------|--------|
+| 🔒 **Luottamus** | Markkinoiden ainoa aidosti lokaali ja eettinen agentti-engine. Yksikään tavu ei poistu laitteeltasi. |
+| 🧠 **Älykkyys** | 10-askeleen kognitiivinen pipeline (Policy Gate → Evolution Loop) korjaa LLM-mallien hallusinaatiot ja oikomiset. |
+| 💜 **Achii** | Persoonallisuusmoottori ("The Needy Loop"), joka tekee tekoälystä kumppanin — ei vain passiivista hakukonetta. |
 
-### 📱 Uutta v4.0:ssa: Zero-Install OmniNode & Gemma 4 Edge
-Sovereign Enginen kenties maagisin ominaisuus on tuki saumattomalle **Gemma 4 Edge (E2B/E4B)** verkotukselle.
-- **Zero-Install WebAssembly**: Skannaa pääkoneelta QR-koodi älypuhelimesi selaimessa, ja puhelin muuttuu osaksi päättelyverkkoa (WASM).
-- **USB-Tethering & mDNS**: Kytke vanha älypuhelin tai Raspberry Pi USB-kaapelilla kiinni isäntäkoneeseen. Isäntäkone offloadaa raskaat OpenClaw-analyysit välittömästi eristettyyn Edge-laitteen omaan llama.cpp / Gemma 4 E4B -piiriin. Lue lisää: [USB_COMPUTING.md](docs/USB_COMPUTING.md).
+> *"Mallit ovat hyödykkeitä. Valjaat ovat tuote."*
+> — IndyDevDan Harness Engineering -filosofia
 
 ---
 
@@ -44,16 +48,20 @@ graph TD
     classDef net fill:#4C1D95,stroke:#A78BFA,stroke-width:2px,color:#fff
 
     subgraph UI["Käyttöliittymä & Etähallinta"]
-        T[Sovereign Dashboard UI]:::ui
+        T["Achii Desktop (Tauri)"]:::ui
         CLI[Sovereign CLI REPL]:::ui
-        Mobile[Mobile WASM Remote]:::ui
+    end
+
+    subgraph ACHII["Achii Personality Engine"]
+        NL["Needy Loop (WS:8081)"]:::core
+        States["normal → thinking → happy → warning"]:::core
     end
 
     subgraph COGNET["Kognitio & LLM Root"]
         Hermes[Hermes Research]:::mem
         OC[OpenClaw Deep Analysis]:::mem
         LLM[Gemma 4 LLM Core]:::mem
-        RAG[(ChromaDB RAG)]:::mem
+        RAG["ChromaDB RAG"]:::mem
     end
 
     subgraph EXEC["Turvallisuus & Ajo"]
@@ -63,61 +71,67 @@ graph TD
 
     subgraph NETWORK["Edge Compute (OmniNode)"]
         OMNI_WS[WASM Nodes via WebSocket]:::net
-        OMNI_MDNS[Gemma E4B Devices via USB/mDNS]:::net
+        OMNI_MDNS["Gemma E4B Devices (USB/mDNS)"]:::net
     end
 
-    %% Yhteydet
-    T <--> |REST/WS| LLM
+    T <--> |WS| NL
     CLI <--> |Missions| LLM
-    Mobile <--> |WS & QR-Pair| LLM
+    NL --> |State Updates| T
     LLM <--> RAG
     LLM --> Hermes
     LLM --> OC
     LLM --> |Code| AST
     AST --> WSBOX
-    LLM --> |Offload Task| OMNI_WS
-    LLM --> |Offload Task| OMNI_MDNS
+    LLM --> |Offload| OMNI_WS
+    LLM --> |Offload| OMNI_MDNS
 ```
 
 ### Keskeiset Komponentit
 
 | Moduuli | Teknologia | Kuvaus |
-|---------|-------------|---------|
-| **Hermosto (Watcher)** | `watchdog` + `asyncio` | Reagoi `Inbox/` -kansioon ilmestyviin syötteisiin < 50ms latenssilla. Osaa käsitellä massiivisia rinnakkaisia tietuetaakkoja. |
-| **Kognitio (LLM Gateway)**| `llm_client.py` | Ohjaa päälaskennan (Ollama / Gemma 4). Toimii orkestraattorina koko verkolle. |
-| **OmniNode Edge** | `WebAssembly / mDNS` | Mahdollistaa laskennan hajauttamisen USB-tetheröityihin mobiililaitteisiin (**Gemma 4 E2B/E4B**) täysin Zero-Install periaatteella. |
-| **AST & Win Sandbox** | Lokaali Eristys | Kaksikerroksinen suojaus: AST-skannaus ja Microsoft Windows Sandbox (.wsb) estämään vaaralliset ajot isäntäkäyttöjärjestelmässä täysin irrotetusti. |
-| **RAG-Muisti** | `ChromaDB` | Vektoroitu semanttinen lyhyt- ja pitkäkestoinen muisti (Embedding: `mxbai-embed-large`). |
-| **Hermes & OpenClaw** | Työnkulut | Vahvasti asynkroniset kognitiotyönkulut tauottomaan iteratiiviseen tutkimukseen ja syväpäättelyyn. |
+|---------|------------|--------|
+| **Achii Core** | `FastAPI + WebSocket` | "Needy Loop" persoonallisuusmoottori. Reagoi käytön taukoon, vaihtaa tilaa, lähettää viestejä. |
+| **Sovereign CLI** | `cli.py + cli_theme.py` | Kupari/teräs/amber -brändätty REPL. Hermes, OpenClaw, benchmark, /whoami. |
+| **Hermosto (Watcher)** | `watchdog + asyncio` | Reagoi `Inbox/`-kansioon < 50ms latenssilla. |
+| **Kognitio (LLM)** | `llm_client.py` | Gemma 4:e4b (ensisijainen), Llama 3.2:3b (fallback). |
+| **OmniNode Edge** | `mDNS + WebSocket` | Laskennan hajauttaminen USB-tetheröityihin mobiililaitteisiin. |
+| **RAG-Muisti** | `ChromaDB` | Vektoroitu semanttinen muisti (mxbai-embed-large). |
+| **AST & Sandbox** | Lokaali eristys | AST-skannaus + Windows Sandbox (.wsb). |
+| **Desktop** | `Tauri + React/Vite` | 2D SVG Achii-avatar, 3-paneeli layout, reaaliaikainen chat. |
 
 ---
 
-## ⚡ Universal Sovereign Launch (Asennus & Käyttö)
+## ⚡ Käynnistys
 
-Sovereign Engine hylkää paloitellut scriptit. Kokonaisuus ajetaan ylös yhdellä interaktiivisella komentoketjulla.
-
-**Vaatimukset:**
-- Python 3.10+
-- [Ollama](https://ollama.com) asennettuna taustalla.
-
-**1. Käynnistä "Matrix" (Kaikki järjestelmät Liveen)**
 ```powershell
+# Kaikki kerralla (server + watcher + achii core + desktop + CLI)
 .\launch_sovereign.ps1
 ```
 
-Skripti laukaisee Watcherin, RAG-kannan, FastAPI-palvelimen (UI ja WebSocketit) sekä Sovereign CLI:n yhdessä synkronoidussa instanssissa.
+Skripti käynnistää:
+1. **A2A Server** → `http://127.0.0.1:8080`
+2. **Watcher** → Inbox-valvoja
+3. **Achii Core** → `ws://127.0.0.1:8081/ws/achii`
+4. **Desktop UI** → `http://127.0.0.1:5173`
+5. **CLI REPL** → tähän terminaaliin
 
-### Tehtävien Anto
-Käyttö on yksinkertaista. Pudota dokumentteja, csv-tiedostoja tai komentoja `Inbox/` kansioon joko ohjelmallisesti, käyttöliittymän upload-painikkeesta, komentoriviltä, tai kauko-ohjaimena toimivalta kännykältä!
+### Ensimmäinen askel
+```powershell
+# CLI:ssä:
+/status           # Järjestelmän tila
+/whoami           # Achiin alkuperätarina (The Fallen Sovereign)
+hermes "tutkimus" # Iteratiivinen tutkimus
+openclaw "task"   # Syväanalyysi
+```
 
 ---
 
 ## 🛡️ Sovereign Security Model
 
-**Täysi lokaali ilmaherruus.** Järjestelmä sijaitsee kokonaan sinun laitteistollasi:
-1. **Zero Cloud Egress:** Kaikki inferenssi lokaalisti asennetuilla malleilla. Yksikään koodirivi tai dokumentti ei poistu laitteelta.
-2. **Kaksikerroksinen Sandbox:** AST-skannaus estää vaaralliset kutsut → Windows Sandbox (.wsb) varmistaa OS-tason eristyksen suoritukselle.
-3. **Air-Gapped OmniNode:** USB-tetheröity lisälaskentateho ei nojaa WiFi-verkkoon, vaan rakentaa tunkeutumattoman oman USB/IP-väylän laitteiden välille.
+1. **Zero Cloud Egress:** Kaikki inferenssi lokaalisti. Yksikään dokumentti ei poistu laitteelta.
+2. **Kaksikerroksinen Sandbox:** AST-skannaus → Windows Sandbox (.wsb).
+3. **Air-Gapped OmniNode:** USB-tetheröity laskentateho, ei WiFi-riippuvuutta.
+4. **Policy Gate v4.2:** Jokainen agenttitoiminto validoidaan `!_SOVEREIGN.md`-sääntöjä vasten.
 
 ---
 
@@ -128,11 +142,13 @@ Käyttö on yksinkertaista. Pudota dokumentteja, csv-tiedostoja tai komentoja `I
 | v3.0 | Perusarkkitehtuuri (Watcher, RAG, AST Sandbox) | ✅ Valmis |
 | v3.5 | Sovereign Engine (Evoluutio, Agent Print, Swarm) | ✅ Valmis |
 | v3.5.1 | MCP Server, Win Sandbox, Hermes & OpenClaw | ✅ Valmis |
-| **v4.0** | **OmniNode Edge (WASM/USB mDNS), Gemma 4 E2B/E4B -arkkitehtuuri, Dashboard UI** | ✅ **Valmis (Stable)** |
+| v4.0 | OmniNode Edge, Gemma 4, Dashboard UI | ✅ Valmis |
+| **v4.2** | **Achii Personality Engine, Desktop App, The Rusty Awakening** | ✅ **Valmis** |
 
 ---
 
 <div align="center">
-  <p>Rakennetaan ohjelmistofilosofian vapaata tulevaisuutta. 🚀</p>
-  <i>- AgentDir Sovereign Team</i>
+  <p>Rakennetaan ohjelmistofilosofian vapaata tulevaisuutta. 🦄</p>
+  <p><em>"Romusta rakennettu, timantiksi hiottu."</em></p>
+  <i>— AgentDir x Achii Sovereign Team</i>
 </div>

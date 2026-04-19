@@ -75,7 +75,7 @@ def paint(text: str, *codes: str) -> str:
 #  ASCII-logo (figlet "slant" -tyyli — sama kuin direktiivissä määrätty)
 # ─────────────────────────────────────────────────────────────────────────────
 
-BANNER_VERSION = "1.0.4-beta"
+BANNER_VERSION = "4.2.0"
 BANNER_CODENAME = "The Rusty Awakening"
 
 _BANNER_ART = [
