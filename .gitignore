@@ -1,40 +1,71 @@
+# ════════════════════════════════════════════════════════
+# AgentDir x Achii — Sovereign .gitignore
+# ════════════════════════════════════════════════════════
+
+# ── Python ──
 __pycache__/
-.pytest_cache/
-*.egg-info/
 *.pyc
 *.pyo
+*.egg-info/
+.pytest_cache/
 .venv/
 venv/
+uv.lock
+
+# ── Environment ──
 .env
 .env.secure
+*.backup
 
-# AgentDir runtime-data (ei versionhallintaan)
+# ── Runtime Data ──
 memory/chroma/
 memory/task_history.jsonl
 evolution.log
 swarm/
+scratch/
 
-# Outbox ja Inbox (käyttäjän data)
+# ── User Data ──
 Inbox/*
 Outbox/*
 !Inbox/.gitkeep
 !Outbox/.gitkeep
 
-# Mallit
+# ── Workspace (local only) ──
+workspace/archive/
+workspace/visuals/
+workspace/__pycache__/
+
+# ── Models (large binary) ──
 *.gguf
 *.bin
+*.safetensors
 
-# OS-tiedostot
+# ── Media Bloat Guard ──
+# Only allow specific images via git add -f
+workspace/**/*.png
+workspace/**/*.jpg
+workspace/**/*.mp4
+workspace/**/*.webm
+workspace/**/*.webp
+
+# ── OS ──
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# IDE
+# ── IDE ──
 .vscode/
 .idea/
 *.swp
 *~
 
-# Tauri / desktop
+# ── Desktop / Tauri ──
 desktop/node_modules/
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
+desktop/dist/
+
+# ── Misc ──
+outputs/
+raw/
+*.log

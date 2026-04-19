@@ -83,7 +83,7 @@ def test_backwards_compat_with_result_dict(tmp_path):
         task="Vanha kutsu",
         result=result,
         model="ollama/gemma4:e4b",
-        mode="openclaw",
+        mode="omninode",
     )
     assert print_id
     json_file = tmp_path / f"agent_print_{print_id}.json"

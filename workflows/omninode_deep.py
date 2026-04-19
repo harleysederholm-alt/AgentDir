@@ -1,5 +1,6 @@
 """
-OpenClaw — **Internal** multi-stage deep-analysis workflow.
+OmniNode-Deep — **Internal** multi-stage deep-analysis workflow
+(formerly ``OpenClaw``).
 
 NOT an external Agent-to-Agent protocol. Runs inside this process under
 ``orchestrator.WorkflowOrchestrator`` and drives a three-stage cycle:
@@ -13,15 +14,15 @@ External agent-to-agent messaging lives in ``a2a_protocol.py`` — see
 import asyncio
 import logging
 
-logger = logging.getLogger("agentdir.workflows.openclaw")
+logger = logging.getLogger("agentdir.workflows.omninode")
 
-class OpenClawWorkflow:
+class OmniNodeDeepWorkflow:
     def __init__(self, llm_client, rag_memory):
         self.llm = llm_client
         self.rag = rag_memory
         
     async def run(self, task: str) -> str:
-        logger.info("[OpenClaw] Aloitetaan monivaiheinen analyysi")
+        logger.info("[OmniNode] Aloitetaan monivaiheinen analyysi")
         
         # Vaihe 1: Ongelman dekoodaus
         decode_prompt = f"Hajota seuraava tehtävä {task} loogisiin osiin. Mitä tietoa tarvitsemme RAG-kannasta?"

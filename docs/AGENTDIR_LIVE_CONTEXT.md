@@ -75,7 +75,7 @@ Muisti: ChromaDB (ei FAISS — ChromaDB on jo käytössä)
 ✅ RAG-hakustrategiat (ChromaDB päällä)
 ✅ Web-UI parannukset (Tauri)
 ✅ Benchmark-raportointi
-✅ Uudet workflow-moodit (openclaw/hermes)
+✅ Uudet workflow-moodit (omninode/sovereign)
 ✅ .agentdir.md ankkurijärjestelmä (uusi, ei vielä implementoitu)
 ✅ OmniNode-integraatio (uusi ominaisuus)
 ✅ Agent Print -raportointi
@@ -115,7 +115,7 @@ graph TD
     end
 
     subgraph COGNET["Kognitio ja suoritusverkko"]
-        LLM[OpenClaw Gateway + Gemma4]:::mem
+        LLM[OmniNode Gateway + Gemma4]:::mem
         RAG[(ChromaDB RAG-Muisti)]:::mem
         AST[AST Python Sandbox]:::exe
     end
@@ -149,7 +149,7 @@ graph TD
 [ ] Prompt engineering -tiedostot (.prompts/ kansio)
 [ ] OmniNode bridge (USB/WiFi NPU sharding)
 [ ] MCP-protokolla (Model Context Protocol) tuki
-[ ] openclaw/hermes workflow-moodit orchestraattoriin
+[ ] omninode/sovereign workflow-moodit orchestraattoriin
 ```
 
 ### Prioriteetti 3 — Skaalautuvuus

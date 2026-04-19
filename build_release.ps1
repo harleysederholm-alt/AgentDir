@@ -1,12 +1,12 @@
 #Requires -Version 5.1
-# build_release.ps1 - Automatisoi Sovereign Engine v4.0 binäärijakelun (Windows)
+# build_release.ps1 - Automatisoi Achii Sovereign Engine v4.2 binäärijakelun (Windows)
 
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 Set-Location -LiteralPath $Root
 
 Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host " Sovereign Engine v4.0 - Työpöytäsovelluksen Build" -ForegroundColor Cyan
+Write-Host " Achii Sovereign Engine v4.2 - Työpöytäsovelluksen Build" -ForegroundColor Cyan
 Write-Host "===============================================" -ForegroundColor Cyan
 
 # Varmistetaan että Tauri on saatavilla ja riippuvuudet asennettu
@@ -19,7 +19,7 @@ Write-Host "-> Rakennetaan Tauri -sovellus (voi kestää 5-10 min)..." -Foregrou
 npm run tauri build
 
 # Määritellään Output kansio agentdir-juureen
-$BuildOut = "$Root\Release\SovereignEngine-v4.0.0-windows"
+$BuildOut = "$Root\Release\AchiiSovereignEngine-v4.2.0-windows"
 if (Test-Path $BuildOut) { Remove-Item -Recurse -Force $BuildOut }
 New-Item -ItemType Directory -Path $BuildOut | Out-Null
 
@@ -57,7 +57,7 @@ foreach ($dir in $DirsToCopy) {
 
 # Pakkaa koko hoito ZIP:ksi (Compression Level Optimal)
 Write-Host "-> Luodaan ZIP arkisto (SovereignEngine-v4.0.0-windows.zip)..." -ForegroundColor Yellow
-Compress-Archive -Path "$BuildOut\*" -DestinationPath "$Root\Release\SovereignEngine-v4.0.0-windows.zip" -Force
+Compress-Archive -Path "$BuildOut\*" -DestinationPath "$Root\Release\AchiiSovereignEngine-v4.2.0-windows.zip" -Force
 
 Write-Host "===============================================" -ForegroundColor Cyan
 Write-Host " BUILD VALMIS!" -ForegroundColor Green

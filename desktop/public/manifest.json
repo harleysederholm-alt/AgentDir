@@ -1,0 +1,16 @@
+{
+  "name": "Achii Sovereign",
+  "short_name": "Achii",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "description": "Sovereign Engine & OmniNode Edge Interface",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}

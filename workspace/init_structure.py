@@ -23,8 +23,8 @@ SOVEREIGN_TEMPLATE = """# !_SOVEREIGN.md — AgentDir 3.5 Sovereign Map
 - node_2: [lisää WiFi laite]
 
 ## REITITYSSÄÄNNÖT
-- Kooditehtävät → openclaw
-- Muisti/tutkimus → hermes
+- Kooditehtävät → omninode
+- Muisti/tutkimus → sovereign
 - Visio → vision-backend
 """
 

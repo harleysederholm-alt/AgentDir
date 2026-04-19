@@ -4,7 +4,7 @@
 |---|---|
 | Tehtävä | Etsi auth_service.py-tiedostosta kaikki aikaleimalogiikat... |
 | Malli | ollama/gemma4:e4b |
-| Moodi | openclaw |
+| Moodi | omninode |
 | Tulos | ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Kyllä |
 | EU AI Act Art.13 | ✅ |

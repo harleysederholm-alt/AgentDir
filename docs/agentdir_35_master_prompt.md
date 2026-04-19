@@ -25,7 +25,7 @@ You verify with tests before marking anything complete.
 AgentDir 3.5/
 ├── !_SOVEREIGN.md          # L1: Global routing, ethics, OmniNode map
 ├── cli.py                  # Entry point — all commands go through here
-├── orchestrator.py         # WorkflowOrchestrator (openclaw + hermes modes)
+├── orchestrator.py         # WorkflowOrchestrator (omninode + sovereign modes)
 ├── workspace/
 │   ├── policy.py           # Pre-flight task validation (EU AI Act gate)
 │   ├── sandbox.py          # Safe YOLO isolated execution (subprocess)
@@ -80,8 +80,8 @@ AgentDir 3.5/
 - node_2: [WiFi device] — KV-cache shard layer 40-60
 
 ## Routing Rules
-- Code tasks → openclaw mode
-- Memory/research tasks → hermes mode
+- Code tasks → omninode mode
+- Memory/research tasks → sovereign mode
 - Vision tasks → model_router (vision backend)
 ```
 
@@ -108,9 +108,9 @@ def main():
     run_p.add_argument("task", help="Tehtävän kuvaus")
     run_p.add_argument(
         "--mode",
-        choices=["openclaw", "hermes"],
-        default="openclaw",
-        help="Workflow-moodi (oletus: openclaw)"
+        choices=["omninode", "sovereign"],
+        default="omninode",
+        help="Workflow-moodi (oletus: omninode)"
     )
     run_p.add_argument(
         "--model",
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
 ### 1.3 — `orchestrator.py`
 Implement `WorkflowOrchestrator` with:
-- `__init__(self, mode="openclaw")` — load `!_SOVEREIGN.md` and active `.agentdir.md`
+- `__init__(self, mode="omninode")` — load `!_SOVEREIGN.md` and active `.agentdir.md`
 - `run(self, task: str, model: str = "auto") -> dict` — full pipeline
 - `status(self)` — print swarm health
 
@@ -185,8 +185,8 @@ Implement `WorkflowOrchestrator` with:
 9. return result                  # Return summary dict
 ```
 
-**openclaw mode** = steps 1-9 linear, fast
-**hermes mode** = steps 1-9 with memory lookup before step 4,
+**omninode mode** = steps 1-9 linear, fast
+**sovereign mode** = steps 1-9 with memory lookup before step 4,
                   skill registry check, and session persistence
 
 ---
@@ -606,8 +606,8 @@ SOVEREIGN_TEMPLATE = """# !_SOVEREIGN.md — AgentDir 3.5 Sovereign Map
 - node_2: [lisää WiFi laite]
 
 ## REITITYSSÄÄNNÖT
-- Kooditehtävät → openclaw
-- Muisti/tutkimus → hermes
+- Kooditehtävät → omninode
+- Muisti/tutkimus → sovereign
 - Visio → vision-backend
 """
 
@@ -825,7 +825,7 @@ pip install -r requirements.txt
 
 python cli.py init              # Alusta rakenne
 python cli.py run "analysoi raw-kansiosi tiedostot"
-python cli.py run "korjaa bugi" --mode openclaw --model ollama/codellama
+python cli.py run "korjaa bugi" --mode omninode --model ollama/codellama
 python cli.py benchmark         # Suorituskykytestit
 pytest -q                       # Testit
 
@@ -835,7 +835,7 @@ pytest -q                       # Testit
 - Karpathy Discipline — kirurginen koodauskuri
 
 ## Integraatio
-Kaikki OpenAI-yhteensopivat mallit toimivat (Ollama, LM Studio, Hermes, OpenClaw).
+Kaikki OpenAI-yhteensopivat mallit toimivat (Ollama, LM Studio, Sovereign, OmniNode).
 ```
 
 ---

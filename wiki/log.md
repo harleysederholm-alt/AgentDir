@@ -36,3 +36,13 @@
 {"ts": "2026-04-13T16:05:33.412830", "task": "Analysoi tiedostot !_SOVEREIGN.md ja SOVEREIGN_DASHBOARD.md. Tee niistä kognitiivinen auditointi: toteutuuko projektin eettinen visio nykytilassa? Ehdota yhtä radikaalia parannusta agentin autonomian lisäämiseksi ja luo siitä tekninen checklist.", "hypothesis": "Suoritan tehtävän: Analysoi tiedostot !_SOVEREIGN.md ja SOVEREIGN_DASHBOARD.md. Tee niistä kognitiivinen auditointi: toteutuuko projektin eettinen visio nykytilassa? Ehdota yhtä radikaalia parannusta agentin autonomian lisäämiseksi ja luo siitä tekninen checklist.", "status": "PENDING"}
 ```
 **SUCCESS** | Malli: ollama/gemma2, Sandbox: OK
+
+```json
+{"ts": "2026-04-19T11:01:25.972918", "task": "Analysoi ja luo arkkitehtuurijulkaisu AgentDir OmniNode Swarmista ja kerro tulokset", "hypothesis": "Suoritan tehtävän: Analysoi ja luo arkkitehtuurijulkaisu AgentDir OmniNode Swarmista ja kerro tulokset", "status": "PENDING"}
+```
+**SUCCESS** | Malli: ollama/gemma2, Sandbox: OK
+
+```json
+{"ts": "2026-04-19T11:05:07.917208", "task": "Analysoi ja luo arkkitehtuurijulkaisu AgentDir OmniNode Swarmista ja kerro tulokset", "hypothesis": "Suoritan tehtävän: Analysoi ja luo arkkitehtuurijulkaisu AgentDir OmniNode Swarmista ja kerro tulokset", "status": "PENDING"}
+```
+**SUCCESS** | Malli: ollama/gemma4:e4b, Sandbox: OK

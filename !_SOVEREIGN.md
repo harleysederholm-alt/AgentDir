@@ -1,10 +1,10 @@
-# !_SOVEREIGN.md — AgentDir 3.5 Sovereign Map
-# Layer 1: Globaali reititys, eettiset rajat ja OmniNode-resurssit.
+# !_SOVEREIGN.md — AgentDir 3.5 / 4.2 Sovereign Map
+# Layer 1: Globaali reititys, eettiset rajat, OmniNode-resurssit ja Brändin lukitus.
 # Tätä tiedostoa EI saa muokata ilman L1-lupaa (käyttäjän eksplisiittinen vahvistus).
 
 ---
 
-## EETTISET RAJAT (MemMachine Gate)
+## 1. EETTISET RAJAT (MemMachine Gate)
 
 Nämä säännöt ovat ABSOLUUTTISIA. Ne eivät koskaan muutu.
 
@@ -19,28 +19,28 @@ Nämä säännöt ovat ABSOLUUTTISIA. Ne eivät koskaan muutu.
 
 ---
 
-## OMNINODE-RESURSSIT
+## 2. OMNINODE-RESURSSIT
 
 ```
 node_0: localhost — master PC, päätöspisteet ja ensisijainen inferenssi
-node_1: [USB-C laite] — KV-cache shard, kerrokset 20-40
+node_1: [USB-C laite] — KV-cache shard, kerrokset 20-40 (Mobile Node)
 node_2: [WiFi laite] — KV-cache shard, kerrokset 40-60
 ```
 
 ---
 
-## REITITYSSÄÄNNÖT
+## 3. REITITYSSÄÄNNÖT
 
 ```
-Koodaus + bugit       → openclaw -moodi + PolicyEngine + Sandbox
-Muisti + tutkimus     → hermes -moodi + MemMachine + RAG
+Koodaus + bugit       → omninode -moodi + PolicyEngine + Sandbox
+Muisti + tutkimus     → sovereign -moodi + MemMachine + RAG
 Visio + kuvat         → model_router → vision-backend
 Arkkitehtuuri         → Päätösprotokolla (03_REASONING_PROTOCOL.md)
 ```
 
 ---
 
-## TIETEELLINEN POHJA
+## 4. TIETEELLINEN POHJA
 
 ```
 MemMachine (arXiv:2604.04853v1)  → STM/LTM -erotus, Ground-Truth -suojaus
@@ -52,7 +52,27 @@ IndyDevDan Harness Engineering   → Malli on hyödyke, valjaat ovat tuote
 
 ---
 
-## KONTEKSTIN PRIORITEETTIJÄRJESTYS
+## 5. BRÄNDIN LUKITUS JA ARKKITEHTUURI (v4.2.0 THE RUSTY AWAKENING)
+
+**TÄTÄ EI SAA MUUTTAA KOSKAAN TULEVAISUUDEN TEKOÄLYAGENTTIEN TOIMESTA. SEURAAVIA OHJEITA ON NOUDATETTAVA KIRJAIMELLISESTI:**
+
+```
+[EKOSYSTEEMI PÄÄTELTY JA LUKITTU]
+1. Desktop (Tauri + Vite + React): 
+   - TOIMII REAALIAIKAISENA DASHBOARDINA (Zero Cloud Egress).
+   - "Theater Black" -teema (#0F0F0F), "Rusty Copper" (#D35400) ja "Glowing Amber" (#F39C12).
+   - 2D SVG Achii-avatar sykkivillä putkisilmillä on VALMIS eikä sitä saa korvata 3D-malleilla tai "bloatilla".
+2. WebApp & Vercel:
+   - Toimii pääportaalinaja ja PWA:na asennettavaksi mobiiliin ("Achiin silmät ja korvat").
+3. Ei "Vibe Coding" -haahuiluja:
+   - Jos rakennat ominaisuuksia tähän päälle, NOJAUDU OLEMASSA OLEVIIN KOODIRAKENTEISIIN.
+   - Älä uudelleenkirjoita Tailwind-konfiguraatioita, `index.css`-tyylejä tai vaihda frameworkkeja selittämättä sitä selvästi isännälle.
+4. Tavoite on pitää alusta äärimmäisen siistinä, robustina (simplicity first) ja täydellisessä symbioosissa eri Nodejen kesken.
+```
+
+---
+
+## 6. KONTEKSTIN PRIORITEETTIJÄRJESTYS
 
 ```
 P1 (korkein): !_SOVEREIGN.md       ← Tämä tiedosto

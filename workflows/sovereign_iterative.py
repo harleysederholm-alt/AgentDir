@@ -1,5 +1,5 @@
 """
-Hermes — **Internal** iterative-research workflow.
+Sovereign — **Internal** iterative-research workflow (formerly ``Hermes``).
 
 NOT an external Agent-to-Agent protocol. Runs inside this process under
 ``orchestrator.WorkflowOrchestrator`` and executes a cycle of
@@ -14,21 +14,21 @@ different concept entirely — see
 import asyncio
 import logging
 
-logger = logging.getLogger("agentdir.workflows.hermes")
+logger = logging.getLogger("agentdir.workflows.sovereign")
 
-class HermesWorkflow:
+class SovereignIterativeWorkflow:
     def __init__(self, llm_client, rag_memory):
         self.llm = llm_client
         self.rag = rag_memory
         
     async def run(self, issue: str, max_iterations: int = 3) -> str:
-        logger.info(f"[Hermes] Aloitetaan iteratiivinen tutkimus. Max iteraatiot: {max_iterations}")
+        logger.info(f"[Sovereign] Aloitetaan iteratiivinen tutkimus. Max iteraatiot: {max_iterations}")
         
         context_gathered = ""
         current_hypothesis = issue
         
         for i in range(max_iterations):
-            logger.info(f"[Hermes] Iteraatio {i+1}")
+            logger.info(f"[Sovereign] Iteraatio {i+1}")
             rag_hits = self.rag.query(current_hypothesis, n_results=2)
             context_gathered += f"\n[Iteraatio {i+1} hits]\n{rag_hits}"
             
