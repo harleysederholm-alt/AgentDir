@@ -53,7 +53,7 @@ AgentDir tekee tavallisesta tiedostojärjestelmästäsi älykkään.
 Jos haluat puhua agentille suoraan päätteessä, kokeile näitä:
 
 - `> status` : Näyttää verkoston tilan ja RAG-muistin tilanteen.
-- `> operaatio "Tutki hakemisto src ja refaktoroi tiedosto main.py"` : Käynnistää laajemman tutkimus- tai koodaustehtävän (Hermes / OpenClaw -työnkululla).
+- `> operaatio "Tutki hakemisto src ja refaktoroi tiedosto main.py"` : Käynnistää laajemman tutkimus- tai koodaustehtävän (Sovereign / OmniNode -työnkululla).
 - `> sandbox test fail.py` : Testaa tiedoston turvallisesti eristetyssä ympäristössä.
 
 **Lisää teknistä syvyyttä, arkkitehtuurikuvauksia ja API-dokumentaatiota löydät [kokonaisvaltaisesta README.md-tiedostosta](README.md).**

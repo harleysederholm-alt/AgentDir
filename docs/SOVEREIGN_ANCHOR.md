@@ -64,8 +64,8 @@ node_2: [lisää laite] — KV-cache shard
 ## REITITYSSÄÄNNÖT
 
 ```
-Koodaus + bugit      → openclaw + 01 + 03 + 05 + 08
-Tutkimus + muisti    → hermes + 01 + 02 + 03
+Koodaus + bugit      → omninode + 01 + 03 + 05 + 08
+Tutkimus + muisti    → sovereign + 01 + 02 + 03
 Arkkitehtuuri        → 01 + 03 (päätösprotokolla)
 Tekstin kirjoitus    → 01 + 04 + 08
 Ongelman selvitys    → 07 (meta-kehotteet)

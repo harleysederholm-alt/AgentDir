@@ -1,0 +1,15 @@
+{
+  "print_id": "0A922FA1",
+  "timestamp": "2026-04-19T08:01:57.983472+00:00",
+  "task_description": "Analysoi ja luo arkkitehtuurijulkaisu AgentDir OmniNode Swarmista ja kerro tulokset",
+  "model_used": "ollama/gemma2",
+  "fallback_used": false,
+  "rag_hits": 0,
+  "sandbox_attempts": 1,
+  "sandbox_success": true,
+  "evolution_triggered": false,
+  "input_file": "",
+  "output_file": "",
+  "execution_ms": 0,
+  "eu_ai_act_compliant": true
+}

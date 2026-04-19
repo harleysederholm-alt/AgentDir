@@ -6,7 +6,7 @@
 | Moduuli | Tiedosto | Tarkoitus |
 |---|---|---|
 | CLI | `cli.py` | Sovereign REPL -komentorivikäyttöliittymä |
-| Orkestroija | `orchestrator.py` | 10-vaiheinen kognitiivinen pipeline (openclaw/hermes moodit) |
+| Orkestroija | `orchestrator.py` | 10-vaiheinen kognitiivinen pipeline (omninode/sovereign moodit) |
 | Watcher | `watcher.py` | Hermosto — tiedostojärjestelmän valvonta (watchdog + asyncio) |
 | LLM Client | `llm_client.py` | OpenAI-yhteensopiva Ollama-rajapinta + fallback-malli |
 | RAG Memory | `rag_memory.py` | ChromaDB-pohjainen semanttinen muisti (mxbai-embed-large) |
@@ -21,8 +21,8 @@
 
 | Työnkulku | Tiedosto | Tarkoitus |
 |---|---|---|
-| OpenClaw | `workflows/openclaw.py` | Monivaiheinen syväanalyysi: dekoodaus → syvähaku → synteesi |
-| Hermes | `workflows/hermes.py` | Iteratiivinen tutkimus: syklinen RAG-haku kunnes vastaus löytyy |
+| OmniNode | `workflows/omninode.py` | Monivaiheinen syväanalyysi: dekoodaus → syvähaku → synteesi |
+| Sovereign | `workflows/sovereign.py` | Iteratiivinen tutkimus: syklinen RAG-haku kunnes vastaus löytyy |
 
 ## Verkko- ja integraatiomoduulit
 

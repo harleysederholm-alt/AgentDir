@@ -9,10 +9,10 @@ import os
 
 # Tehtävätyypin mukaan valittu malli
 TASK_ROUTING: dict[str, str] = {
-    "code": "ollama/codellama",
-    "analysis": "ollama/gemma2",
+    "code": "ollama/gemma4:e4b",
+    "analysis": "ollama/gemma4:e4b",
     "vision": "ollama/llava",
-    "summary": "ollama/mistral",
+    "summary": "ollama/gemma4:e4b",
     "default": os.getenv("AGENTDIR_DEFAULT_MODEL", "ollama/gemma4:e4b"),
 }
 

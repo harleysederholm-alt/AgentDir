@@ -36,4 +36,4 @@ Mikäli haluat ajaa natiivia **Gemma 4 E4B** mallia laitteella Llama.cpp:n avull
 ## 4. Yhteydenotto Sovereign Engineen
 Kun ylläoleva palvelin on käynnistetty ja USB-liitäntä on aktiivisena, isäntäkoneellasi rullaava **Sovereign Engine OmniNode Manager** havaitsee laitteen automaattisesti tai voit ilmoittaa sen IP-osoitteen.
 
-Tämän jälkeen Sovereign Engine pystyy välittömästi offloadaamaan laskentaa raskaista analytiikkatehtävistään (kuten OpenClaw-kaavinnat) suoraan puhelimesi lokaaliin NPU:hun! Laite toimii tehokkaana lisäkiihdyttimenä ilman, että prosessi vaatii internet-yhteyttä.
+Tämän jälkeen Sovereign Engine pystyy välittömästi offloadaamaan laskentaa raskaista analytiikkatehtävistään (kuten OmniNode-kaavinnat) suoraan puhelimesi lokaaliin NPU:hun! Laite toimii tehokkaana lisäkiihdyttimenä ilman, että prosessi vaatii internet-yhteyttä.

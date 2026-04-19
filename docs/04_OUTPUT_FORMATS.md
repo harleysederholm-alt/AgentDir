@@ -198,7 +198,7 @@ python cli.py run "tehtävä"
 |---|---|
 | Tehtävä | [task] |
 | Malli | [model] |
-| Moodi | openclaw / hermes |
+| Moodi | omninode / sovereign |
 | Tulos | ✅ ONNISTUI / ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Kyllä / Ei |
 | EU AI Act Art.13 | ✅ |

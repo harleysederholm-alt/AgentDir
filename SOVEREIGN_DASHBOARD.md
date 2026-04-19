@@ -20,8 +20,8 @@
 | 🖨️ Agent Print | 🟢 ACTIVE | EU AI Act Art.13 · JSON + MD + TXT |
 | 🔗 MCP Server | 🟢 READY | stdio/SSE · Claude/Cursor compatible |
 | 🌍 OmniNode | 🟡 STANDBY | mDNS discovery · LAN NPU sharding |
-| 🔍 Hermes | 🟢 ACTIVE | Iterative research workflow |
-| 🧪 OpenClaw | 🟢 ACTIVE | Deep analysis & code generation |
+| 🔍 Sovereign | 🟢 ACTIVE | Iterative research workflow |
+| 🧪 OmniNode | 🟢 ACTIVE | Deep analysis & code generation |
 | 👥 Swarm Manager | 🟢 ONLINE | Dynamic child agent spawning |
 
 ---
@@ -55,7 +55,7 @@
                     ┌──────────────┼──────────────┐       │
                     │              │              │       │
               ┌─────▼────┐  ┌─────▼─────┐  ┌────▼────┐  │
-              │  Hermes  │  │ OpenClaw  │  │ChromaDB │  │
+              │  Sovereign  │  │ OmniNode  │  │ChromaDB │  │
               │ Research │  │  Analysis │  │  RAG    │  │
               └────┬─────┘  └─────┬─────┘  └─────────┘  │
                    │              │                      │
