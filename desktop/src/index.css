@@ -92,18 +92,61 @@ body {
   animation: blink-cursor 1s step-end infinite;
 }
 
-/* ─── Node graph -kuplaefekti ─── */
+/* ─── Node graph -kuplaefekti ja yhteysviivat ─── */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(243, 156, 18, 0.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(243, 156, 18, 0.8)); }
+}
 .node-bubble {
-  background: radial-gradient(circle at 30% 30%, rgba(243, 156, 18, 0.15), rgba(211, 84, 0, 0.05));
-  border: 1px solid rgba(211, 84, 0, 0.25);
+  fill: rgba(243, 156, 18, 0.1);
+  stroke: rgba(243, 156, 18, 0.6);
+  animation: pulse-glow 3s infinite ease-in-out;
+}
+.node-bubble.secondary {
+  fill: rgba(211, 84, 0, 0.1);
+  stroke: rgba(211, 84, 0, 0.4);
+  animation: pulse-glow 4s infinite ease-in-out reverse;
+}
+
+@keyframes flow {
+  to { stroke-dashoffset: -20; }
+}
+.connection-line {
+  stroke-dasharray: 4 4;
+  animation: flow 1.5s linear infinite;
+  opacity: 0.6;
 }
 
 /* ─── Causal scratchpad -rivit ─── */
 .causal-line {
-  border-left: 2px solid rgba(211, 84, 0, 0.4);
+  border-left: 2px solid rgba(211, 84, 0, 0.2);
   padding-left: 12px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.causal-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(211, 84, 0, 0.2);
+  transition: all 0.3s ease;
 }
 .causal-line.active {
   border-left-color: #F39C12;
-  background: linear-gradient(90deg, rgba(243, 156, 18, 0.05), transparent);
+  background: linear-gradient(90deg, rgba(243, 156, 18, 0.08), transparent);
+}
+.causal-line.active::before {
+  background: #F39C12;
+  box-shadow: 0 0 8px #F39C12;
+}
+
+/* ─── Project Aegis slide animaatio ─── */
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(500%); }
 }

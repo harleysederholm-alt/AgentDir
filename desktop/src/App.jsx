@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HardDrive, Wifi, Cpu, Activity, FileText, Shield, Zap, ChevronRight, AlertTriangle } from 'lucide-react';
 import AchiiAvatar from './components/AchiiAvatar';
+import AegisSimulator from './components/AegisSimulator';
 
 // ═══════════════════════════════════════════════════════════
 //  ACHII SOVEREIGN COMMAND CENTER v4.2
@@ -75,7 +76,11 @@ export default function App() {
 
   const handleSendMessage = (e) => {
     if (e.key === 'Enter' && inputValue.trim() !== '') {
+      // Immediate local UI response to kill perceived latency
       setMessages(prev => [...prev, { sender: "Käyttäjä", text: inputValue }]);
+      setAchiiState("thinking"); 
+      
+      // Dispatch immediately to socket
       if (ws && ws.readyState === WebSocket.OPEN) ws.send(inputValue);
       setInputValue("");
     }
@@ -122,6 +127,7 @@ export default function App() {
         {[
           { id: 'dashboard', label: 'Dashboard', icon: Activity },
           { id: 'maas-db', label: 'MaaS-DB Graph', icon: FileText },
+          { id: 'aegis', label: 'Project Aegis', icon: Shield },
           { id: 'omninode', label: 'OmniNode Swarm', icon: Cpu },
           { id: 'logs', label: 'Agent Print Logs', icon: Shield },
         ].map(tab => (
@@ -308,22 +314,22 @@ export default function App() {
                   {/* Simulated node graph */}
                   <svg viewBox="0 0 500 300" className="w-full max-w-lg">
                     {/* Connections */}
-                    <line x1="250" y1="60" x2="120" y2="160" stroke="#D35400" strokeWidth="1" opacity="0.4"/>
-                    <line x1="250" y1="60" x2="380" y2="160" stroke="#D35400" strokeWidth="1" opacity="0.4"/>
-                    <line x1="120" y1="160" x2="80" y2="250" stroke="#607D8B" strokeWidth="1" opacity="0.3"/>
-                    <line x1="120" y1="160" x2="180" y2="250" stroke="#607D8B" strokeWidth="1" opacity="0.3"/>
-                    <line x1="380" y1="160" x2="340" y2="250" stroke="#607D8B" strokeWidth="1" opacity="0.3"/>
-                    <line x1="380" y1="160" x2="430" y2="250" stroke="#607D8B" strokeWidth="1" opacity="0.3"/>
+                    <line x1="250" y1="60" x2="120" y2="160" stroke="#D35400" strokeWidth="1" className="connection-line" />
+                    <line x1="250" y1="60" x2="380" y2="160" stroke="#D35400" strokeWidth="1" className="connection-line" />
+                    <line x1="120" y1="160" x2="80" y2="250" stroke="#607D8B" strokeWidth="1" className="connection-line" />
+                    <line x1="120" y1="160" x2="180" y2="250" stroke="#607D8B" strokeWidth="1" className="connection-line" />
+                    <line x1="380" y1="160" x2="340" y2="250" stroke="#607D8B" strokeWidth="1" className="connection-line" />
+                    <line x1="380" y1="160" x2="430" y2="250" stroke="#607D8B" strokeWidth="1" className="connection-line" />
                     
                     {/* PRD Root */}
                     <circle cx="250" cy="60" r="22" className="node-bubble" />
                     <text x="250" y="64" textAnchor="middle" fill="#F39C12" fontSize="9" fontFamily="JetBrains Mono">PRD</text>
                     
                     {/* Code modules */}
-                    <circle cx="120" cy="160" r="18" className="node-bubble" />
+                    <circle cx="120" cy="160" r="18" className="node-bubble secondary" />
                     <text x="120" y="164" textAnchor="middle" fill="#D35400" fontSize="8" fontFamily="JetBrains Mono">cli.py</text>
                     
-                    <circle cx="380" cy="160" r="18" className="node-bubble" />
+                    <circle cx="380" cy="160" r="18" className="node-bubble secondary" />
                     <text x="380" y="164" textAnchor="middle" fill="#D35400" fontSize="8" fontFamily="JetBrains Mono">server.py</text>
                     
                     {/* Leaf nodes */}
@@ -334,7 +340,7 @@ export default function App() {
                       { x: 430, y: 250, label: 'omninode' },
                     ].map((n, i) => (
                       <g key={i}>
-                        <circle cx={n.x} cy={n.y} r="14" fill="rgba(96,125,139,0.1)" stroke="#607D8B" strokeWidth="0.5" />
+                        <circle cx={n.x} cy={n.y} r="14" className="node-bubble secondary" style={{animationDelay: `${i * 0.2}s`}} />
                         <text x={n.x} y={n.y + 3} textAnchor="middle" fill="#607D8B" fontSize="7" fontFamily="JetBrains Mono">{n.label}</text>
                       </g>
                     ))}
@@ -384,6 +390,9 @@ export default function App() {
             </div>
           )}
 
+          {/* Project Aegis -näkymä */}
+          {activeTab === 'aegis' && <AegisSimulator />}
+
           {/* Agent Print Logs */}
           {activeTab === 'logs' && (
             <div className="flex-1 p-6 overflow-y-auto">
@@ -427,16 +436,16 @@ export default function App() {
                   className={`causal-line ${step.status === 'active' ? 'active' : ''} py-1.5 transition-all duration-300`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-mono font-bold ${
+                    <span className={`text-[10px] font-mono font-bold w-4 shrink-0 ${
                       step.status === 'done' ? 'text-copper' 
-                      : step.status === 'active' ? 'text-amber' 
+                      : step.status === 'active' ? 'text-amber animate-pulse' 
                       : 'text-steel/40'
                     }`}>
-                      {step.status === 'done' ? '✓' : step.status === 'active' ? '▸' : '○'} {step.step}.
+                      {step.status === 'done' ? '✓' : step.status === 'active' ? '▸' : '○'}
                     </span>
-                    <span className={`text-[10px] font-mono ${
+                    <span className={`text-[10px] font-mono select-text ${
                       step.status === 'done' ? 'text-steel' 
-                      : step.status === 'active' ? 'text-amber' 
+                      : step.status === 'active' ? 'text-amber text-shadow' 
                       : 'text-steel/30'
                     }`}>
                       {step.text}
