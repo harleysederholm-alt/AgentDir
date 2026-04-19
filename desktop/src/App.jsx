@@ -328,8 +328,8 @@ export default function App() {
                     
                     {/* Leaf nodes */}
                     {[
-                      { x: 80, y: 250, label: 'hermes' },
-                      { x: 180, y: 250, label: 'openclaw' },
+                      { x: 80, y: 250, label: 'sovereign' },
+                      { x: 180, y: 250, label: 'omninode' },
                       { x: 340, y: 250, label: 'a2a' },
                       { x: 430, y: 250, label: 'omninode' },
                     ].map((n, i) => (
