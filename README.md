@@ -58,8 +58,8 @@ graph TD
     end
 
     subgraph COGNET["Kognitio & LLM Root"]
-        Hermes[Hermes Research]:::mem
-        OC[OpenClaw Deep Analysis]:::mem
+        Sovereign[Sovereign Research]:::mem
+        OC[OmniNode Deep Analysis]:::mem
         LLM[Gemma 4 LLM Core]:::mem
         RAG["ChromaDB RAG"]:::mem
     end
@@ -78,7 +78,7 @@ graph TD
     CLI <--> |Missions| LLM
     NL --> |State Updates| T
     LLM <--> RAG
-    LLM --> Hermes
+    LLM --> Sovereign
     LLM --> OC
     LLM --> |Code| AST
     AST --> WSBOX
@@ -91,7 +91,7 @@ graph TD
 | Moduuli | Teknologia | Kuvaus |
 |---------|------------|--------|
 | **Achii Core** | `FastAPI + WebSocket` | "Needy Loop" persoonallisuusmoottori. Reagoi käytön taukoon, vaihtaa tilaa, lähettää viestejä. |
-| **Sovereign CLI** | `cli.py + cli_theme.py` | Kupari/teräs/amber -brändätty REPL. Hermes, OpenClaw, benchmark, /whoami. |
+| **Sovereign CLI** | `cli.py + cli_theme.py` | Kupari/teräs/amber -brändätty REPL. Sovereign, OmniNode, benchmark, /whoami. |
 | **Hermosto (Watcher)** | `watchdog + asyncio` | Reagoi `Inbox/`-kansioon < 50ms latenssilla. |
 | **Kognitio (LLM)** | `llm_client.py` | Gemma 4:e4b (ensisijainen), Llama 3.2:3b (fallback). |
 | **OmniNode Edge** | `mDNS + WebSocket` | Laskennan hajauttaminen USB-tetheröityihin mobiililaitteisiin. |
@@ -120,8 +120,8 @@ Skripti käynnistää:
 # CLI:ssä:
 /status           # Järjestelmän tila
 /whoami           # Achiin alkuperätarina (The Fallen Sovereign)
-hermes "tutkimus" # Iteratiivinen tutkimus
-openclaw "task"   # Syväanalyysi
+sovereign "tutkimus" # Iteratiivinen tutkimus
+omninode "task"   # Syväanalyysi
 ```
 
 ---
@@ -141,7 +141,7 @@ openclaw "task"   # Syväanalyysi
 |-------|--------|--------|
 | v3.0 | Perusarkkitehtuuri (Watcher, RAG, AST Sandbox) | ✅ Valmis |
 | v3.5 | Sovereign Engine (Evoluutio, Agent Print, Swarm) | ✅ Valmis |
-| v3.5.1 | MCP Server, Win Sandbox, Hermes & OpenClaw | ✅ Valmis |
+| v3.5.1 | MCP Server, Win Sandbox, Sovereign & OmniNode | ✅ Valmis |
 | v4.0 | OmniNode Edge, Gemma 4, Dashboard UI | ✅ Valmis |
 | **v4.2** | **Achii Personality Engine, Desktop App, The Rusty Awakening** | ✅ **Valmis** |
 

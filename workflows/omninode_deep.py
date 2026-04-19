@@ -1,20 +1,20 @@
 """
-OpenClaw - Syväanalyyttinen, monivaiheinen päättelytila raskaille RAG-hauille.
+OmniNode - Syväanalyyttinen, monivaiheinen päättelytila raskaille RAG-hauille (ent. OmniNode).
 Käytetään kun perinteinen 1-shot (watcher.py) ei riitä monimutkaisissa tehtävissä.
 """
 
 import asyncio
 import logging
 
-logger = logging.getLogger("agentdir.workflows.openclaw")
+logger = logging.getLogger("agentdir.workflows.omninode")
 
-class OpenClawWorkflow:
+class OmniNodeDeepWorkflow:
     def __init__(self, llm_client, rag_memory):
         self.llm = llm_client
         self.rag = rag_memory
         
     async def run(self, task: str) -> str:
-        logger.info("[OpenClaw] Aloitetaan monivaiheinen analyysi")
+        logger.info("[OmniNode] Aloitetaan monivaiheinen analyysi")
         
         # Vaihe 1: Ongelman dekoodaus
         decode_prompt = f"Hajota seuraava tehtävä {task} loogisiin osiin. Mitä tietoa tarvitsemme RAG-kannasta?"

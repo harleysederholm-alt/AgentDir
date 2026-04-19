@@ -4,7 +4,7 @@
 |---|---|
 | Tehtävä | Etsi Auth_Service-kansiosta kaikki aikaleimalogiikat. Analysoi ne suhteessa /raw/Security_Policy.md  |
 | Malli | ollama/gemma4:e4b |
-| Moodi | openclaw |
+| Moodi | omninode |
 | Tulos | ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Ei |
 | EU AI Act Art.13 | ✅ |

@@ -32,8 +32,8 @@ node_2: [WiFi laite] — KV-cache shard, kerrokset 40-60
 ## 3. REITITYSSÄÄNNÖT
 
 ```
-Koodaus + bugit       → openclaw -moodi + PolicyEngine + Sandbox
-Muisti + tutkimus     → hermes -moodi + MemMachine + RAG
+Koodaus + bugit       → omninode -moodi + PolicyEngine + Sandbox
+Muisti + tutkimus     → sovereign -moodi + MemMachine + RAG
 Visio + kuvat         → model_router → vision-backend
 Arkkitehtuuri         → Päätösprotokolla (03_REASONING_PROTOCOL.md)
 ```

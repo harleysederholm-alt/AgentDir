@@ -2,8 +2,8 @@
 orchestrator.py — AgentDir 3.5 WorkflowOrchestrator
 
 Orkestroi koko suoritusputken kahdessa moodissa:
-  - openclaw: Nopea lineaarinen suoritus (kooditehtävät)
-  - hermes:   Muistirikas suoritus (tutkimus, pitkä konteksti)
+  - omninode: Nopea lineaarinen suoritus (kooditehtävät)
+  - sovereign:   Muistirikas suoritus (tutkimus, pitkä konteksti)
 
 Pipeline-järjestys (pakollinen, ei saa ohittaa):
   1. policy.validate()          → Esitarkistusportti
@@ -30,9 +30,9 @@ class WorkflowOrchestrator:
     vaan delegoi workspace-moduuleille Karpathy-kurin mukaisesti.
     """
 
-    VALID_MODES = ("openclaw", "hermes")
+    VALID_MODES = ("omninode", "sovereign")
 
-    def __init__(self, mode: str = "openclaw") -> None:
+    def __init__(self, mode: str = "omninode") -> None:
         if mode not in self.VALID_MODES:
             raise ValueError(f"Tuntematon moodi: {mode}. Sallitut: {self.VALID_MODES}")
         self.mode = mode
@@ -159,8 +159,8 @@ class WorkflowOrchestrator:
             )
             context += f"\n\n## RAG-tulokset\n{rag_text}"
 
-        # Hermes-moodi: lisää MemMachine LTM-konteksti
-        if self.mode == "hermes":
+        # Sovereign-moodi: lisää MemMachine LTM-konteksti
+        if self.mode == "sovereign":
             ltm_facts = self.memmachine.get_ground_truth()
             if ltm_facts:
                 ltm_text = "\n".join(

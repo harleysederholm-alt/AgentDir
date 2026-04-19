@@ -1,5 +1,5 @@
 """
-test_workflows.py — Hermes & OpenClaw -työnkulkujen testit
+test_workflows.py — Sovereign & OmniNode -työnkulkujen testit
 Mockaa LLM-vastaukset ja testaa logiikka ilman oikeaa mallia.
 """
 import pytest
@@ -7,12 +7,12 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 
-class TestHermesWorkflow:
-    """Testaa Hermes-iteratiivinen tutkimus."""
+class TestSovereignWorkflow:
+    """Testaa Sovereign-iteratiivinen tutkimus."""
 
     def _make_workflow(self, llm_responses: list[str]):
-        """Luo HermesWorkflow mock-LLM:llä."""
-        from workflows.hermes import HermesWorkflow
+        """Luo SovereignWorkflow mock-LLM:llä."""
+        from workflows.sovereign import SovereignWorkflow
 
         mock_llm = MagicMock()
         mock_llm.process_task = AsyncMock(side_effect=llm_responses)
@@ -20,22 +20,22 @@ class TestHermesWorkflow:
         mock_rag = MagicMock()
         mock_rag.query = MagicMock(return_value="RAG konteksti: tekoäly on...")
 
-        return HermesWorkflow(mock_llm, mock_rag)
+        return SovereignWorkflow(mock_llm, mock_rag)
 
-    def test_hermes_instantiation(self):
-        from workflows.hermes import HermesWorkflow
-        wf = HermesWorkflow(MagicMock(), MagicMock())
+    def test_sovereign_instantiation(self):
+        from workflows.sovereign import SovereignWorkflow
+        wf = SovereignWorkflow(MagicMock(), MagicMock())
         assert wf.llm is not None
         assert wf.rag is not None
 
-    def test_hermes_finds_answer_on_first_iteration(self):
+    def test_sovereign_finds_answer_on_first_iteration(self):
         wf = self._make_workflow(["LOPULLINEN VASTAUS: Vastaus on 42"])
         result = asyncio.run(wf.run("Mikä on elämän tarkoitus?", max_iterations=3))
         assert "42" in result
         # LLM kutsuttiin vain kerran koska vastaus löytyi heti
         assert wf.llm.process_task.call_count == 1
 
-    def test_hermes_iterates_until_answer(self):
+    def test_sovereign_iterates_until_answer(self):
         wf = self._make_workflow([
             "Tarvitaan lisää tietoa...",
             "Tutkitaan tarkemmin...",
@@ -45,7 +45,7 @@ class TestHermesWorkflow:
         assert "1991" in result
         assert wf.llm.process_task.call_count == 3
 
-    def test_hermes_respects_max_iterations(self):
+    def test_sovereign_respects_max_iterations(self):
         wf = self._make_workflow([
             "Ei vastausta vielä...",
             "Etsitään lisää...",
@@ -55,7 +55,7 @@ class TestHermesWorkflow:
         assert result is not None
         assert wf.llm.process_task.call_count == 2
 
-    def test_hermes_rag_called_each_iteration(self):
+    def test_sovereign_rag_called_each_iteration(self):
         wf = self._make_workflow([
             "Iteraatio 1...",
             "LOPULLINEN VASTAUS: Tulos",
@@ -64,11 +64,11 @@ class TestHermesWorkflow:
         assert wf.rag.query.call_count == 2
 
 
-class TestOpenClawWorkflow:
-    """Testaa OpenClaw-syväanalyysi."""
+class TestOmniNodeWorkflow:
+    """Testaa OmniNode-syväanalyysi."""
 
     def _make_workflow(self, llm_responses: list[str]):
-        from workflows.openclaw import OpenClawWorkflow
+        from workflows.omninode import OmniNodeWorkflow
 
         mock_llm = MagicMock()
         mock_llm.process_task = AsyncMock(side_effect=llm_responses)
@@ -76,15 +76,15 @@ class TestOpenClawWorkflow:
         mock_rag = MagicMock()
         mock_rag.query = MagicMock(return_value="Syvähaku: arkkitehtuurianalyysi")
 
-        return OpenClawWorkflow(mock_llm, mock_rag)
+        return OmniNodeWorkflow(mock_llm, mock_rag)
 
-    def test_openclaw_instantiation(self):
-        from workflows.openclaw import OpenClawWorkflow
-        wf = OpenClawWorkflow(MagicMock(), MagicMock())
+    def test_omninode_instantiation(self):
+        from workflows.omninode import OmniNodeWorkflow
+        wf = OmniNodeWorkflow(MagicMock(), MagicMock())
         assert wf.llm is not None
         assert wf.rag is not None
 
-    def test_openclaw_runs_three_phases(self):
+    def test_omninode_runs_three_phases(self):
         wf = self._make_workflow([
             "Dekoodaus: tarvitaan tieto koheesiosta ja kytkennöistä",  # Phase 1
             "Synteesi: arkkitehtuuri on modulaarinen ja hyvin rakennettu",  # Phase 3
@@ -96,7 +96,7 @@ class TestOpenClawWorkflow:
         # RAG kutsuttiin kerran (syvähaku)
         assert wf.rag.query.call_count == 1
 
-    def test_openclaw_passes_rag_context_to_synthesis(self):
+    def test_omninode_passes_rag_context_to_synthesis(self):
         wf = self._make_workflow([
             "Aliosat: watcher, rag_memory, sandbox",
             "Loppuraportti: kattava analyysi",

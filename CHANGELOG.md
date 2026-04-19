@@ -15,18 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CLI `plugins` komento listaa aktiiviset laajennukset.
 - **Tauri Binäärijakelu (Desktop)** — Tuotantovalmis `Sovereign Engine` GUI-paketointi.
   - `build_release.ps1` automatisoi koko asennuspaketin rakentamisen `.exe` asennusohjelmaksi ja yhdistää backend-skriptit levitettävään muotoon.
-- **Test Suite v2** — 3 uutta testimoduulia kattamaan MCP Serverin, Hermes/OpenClaw -työnkulut ja CLI REPLin ympäristön.
+- **Test Suite v2** — 3 uutta testimoduulia kattamaan MCP Serverin, Sovereign/OmniNode -työnkulut ja CLI REPLin ympäristön.
 - **Docker Hub Valmius** — Tuotantovalmis `Dockerfile.sovereign` varustettuna `HEALTHCHECK`, optimoiduilla `LABEL` -tageilla ja `VOLUME` mounteilla.
 
 ### Changed
 
 - **`pyproject.toml`** — Version `1.1.0` → `3.5.1-alpha`, added 7 missing modules to `py-modules`.
 - **`requirements.txt`** — Header updated to `Sovereign Engine 3.5.1`.
-- **`launch_sovereign.ps1`** — Removed broken `openclaw gateway` reference; CLI now runs directly in current terminal.
+- **`launch_sovereign.ps1`** — Removed broken `omninode gateway` reference; CLI now runs directly in current terminal.
 
 ### Fixed
 
-- CLI `help` command now shows `hermes` and `openclaw` options.
+- CLI `help` command now shows `sovereign` and `omninode` options.
 - Logo version updated to `3.5.1`.
 
 ---
@@ -39,8 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP Server** (`mcp_server.py`) — Stdio/SSE-compatible Model Context Protocol server exposing RAG search and sandbox execution to external AI tools (Claude, Cursor, etc.).
 - **OmniNode** (`omninode.py`) — Distributed compute node using mDNS/Zeroconf for LAN-based inference offloading.
 - **Windows Sandbox Driver** (`sandbox/win_sandbox_driver.py`) — OS-level code isolation using Microsoft Windows Sandbox (.wsb) for untrusted code execution.
-- **Hermes Workflow** (`workflows/hermes.py`) — Iterative autonomous research workflow that cycles until a conclusion is reached.
-- **OpenClaw Workflow** (`workflows/openclaw.py`) — Deep analysis pipeline combining RAG context with multi-step reasoning.
+- **Sovereign Workflow** (`workflows/sovereign.py`) — Iterative autonomous research workflow that cycles until a conclusion is reached.
+- **OmniNode Workflow** (`workflows/omninode.py`) — Deep analysis pipeline combining RAG context with multi-step reasoning.
 - **PromptManager** (`prompt_manager.py`) — Dynamic, role-based prompt template system replacing hardcoded strings.
 - **Role Prompts** (`.prompts/`) — Modular prompt templates: `coder.md`, `analyzer.md`, `auditor.md`.
 - **Evolution Guardrails** — `require_approval: true` (default) prevents autonomous prompt drift; proposals saved to `Outbox/EVOLUTION_PROPOSAL_vX.md` for human review.
@@ -50,8 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **README.md** — Simplified header, added Quick Start link, expanded Mermaid architecture diagram with MCP/OmniNode/Hermes/Win Sandbox nodes, added Roadmap table.
-- **Mermaid Architecture** — Now shows 6 subsystems: UI (incl. MCP), Pipeline, Nervous System, Cognition (Hermes + OpenClaw), Execution (AST + Win Sandbox), and Network (OmniNode).
+- **README.md** — Simplified header, added Quick Start link, expanded Mermaid architecture diagram with MCP/OmniNode/Sovereign/Win Sandbox nodes, added Roadmap table.
+- **Mermaid Architecture** — Now shows 6 subsystems: UI (incl. MCP), Pipeline, Nervous System, Cognition (Sovereign + OmniNode), Execution (AST + Win Sandbox), and Network (OmniNode).
 - **SOVEREIGN_DASHBOARD.md** — Updated to v3.5.1-alpha with 13 monitored components.
 - **Swarm Manager** — Now supports dynamic model injection and subprocess-based child agent spawning.
 - **Watcher** — Integrated PromptManager for dynamic, context-aware prompt generation.

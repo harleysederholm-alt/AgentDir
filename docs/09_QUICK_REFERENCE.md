@@ -72,8 +72,8 @@ Ei ulkoisia kirjastoja paitsi: [lista].
 ```
 "Lue !_SOVEREIGN.md ensin. Kirjoita sitten hypoteesi log.md:hen."
 "Toteuta [X] Policy → Hypothesis → Sandbox → Verify -järjestyksessä."
-"Käytä openclaw-moodia [yksinkertainen tehtävä]."
-"Käytä hermes-moodia [pitkäkestoinen / muistia vaativa tehtävä]."
+"Käytä omninode-moodia [yksinkertainen tehtävä]."
+"Käytä sovereign-moodia [pitkäkestoinen / muistia vaativa tehtävä]."
 "Generoi Agent Print tämän suorituksen jälkeen."
 "Muuta VAIN workspace/[tiedosto]. Älä koske cli.py tai orchestrator.py."
 ```

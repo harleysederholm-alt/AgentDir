@@ -4,7 +4,7 @@
 |---|---|
 | Tehtävä | analysoi tämä testi |
 | Malli | ollama/gemma2 |
-| Moodi | openclaw |
+| Moodi | omninode |
 | Tulos | ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Kyllä |
 | EU AI Act Art.13 | ✅ |

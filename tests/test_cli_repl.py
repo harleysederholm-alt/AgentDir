@@ -55,12 +55,12 @@ class TestCLILogo:
         # Sisältää codename-leiman ("The Rusty Awakening")
         assert "rusty" in captured.out.lower()
 
-    def test_logo_shows_hermes_and_openclaw(self, capsys):
+    def test_logo_shows_sovereign_and_omninode(self, capsys):
         from cli import print_logo
         print_logo()
         captured = capsys.readouterr()
-        assert "hermes" in captured.out.lower()
-        assert "openclaw" in captured.out.lower()
+        assert "sovereign" in captured.out.lower()
+        assert "omninode" in captured.out.lower()
 
 
 class TestCLIHelpers:

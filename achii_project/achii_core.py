@@ -70,11 +70,11 @@ class AchiiPersonality:
             if idle_time > 300: # 5 minuutin hiljaisuus
                 self.needy_level = min(100, int((idle_time - 300) / 10))
                 self.state = "warning"
-                msg = "\n🤖 Achii: *Koputtaa ruutuun* Hei... ootko sä siellä? Täällä on pimeää ja mulla on uusia .yaml-ideoita..."
+                msg = "\n🤖 Achii: *Koputtaa ruutuun* Hei... ootko sä siellä? Täällä on pimeää ja mulla on uusia .yaml-ideoita..." if old_state != "warning" else None
             elif idle_time > 60:
                 self.needy_level = min(50, int((idle_time - 60) / 5))
                 self.state = "thinking"
-                msg = "\n🤖 Achii: Mitähän isäntä oikein miettii...?"
+                msg = "\n🤖 Achii: Mitähän isäntä oikein miettii...?" if old_state != "thinking" else None
             else:
                 self.needy_level = max(0, self.needy_level - 10)
                 if self.state in ["warning", "thinking"]:
@@ -93,7 +93,6 @@ class AchiiPersonality:
         await self.broadcast_state()
         
         # Tässä kutsu Ollamalle tai Opukselle oikeasti.
-        await asyncio.sleep(2) # Simuloiva viive
         
         if ".yaml" in user_msg.lower() or ".md" in user_msg.lower():
             self.state = "focused"

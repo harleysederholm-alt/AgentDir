@@ -4,7 +4,7 @@
 |---|---|
 | Tehtävä | Hei Gemma, testaa OmniNode-verkkoa ja palauta 'Järjestelmä on aktiivinen'. |
 | Malli | ollama/gemma4:e4b |
-| Moodi | openclaw |
+| Moodi | omninode |
 | Tulos | ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Kyllä |
 | EU AI Act Art.13 | ✅ |

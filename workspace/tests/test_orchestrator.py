@@ -12,15 +12,15 @@ from orchestrator import WorkflowOrchestrator
 class TestWorkflowOrchestrator:
     """Testaa orkestroijan perustoiminnallisuus."""
 
-    def test_init_openclaw(self):
-        """openclaw-moodi alustetaan oikein."""
-        orch = WorkflowOrchestrator(mode="openclaw")
-        assert orch.mode == "openclaw"
+    def test_init_omninode(self):
+        """omninode-moodi alustetaan oikein."""
+        orch = WorkflowOrchestrator(mode="omninode")
+        assert orch.mode == "omninode"
 
-    def test_init_hermes(self):
-        """hermes-moodi alustetaan oikein."""
-        orch = WorkflowOrchestrator(mode="hermes")
-        assert orch.mode == "hermes"
+    def test_init_sovereign(self):
+        """sovereign-moodi alustetaan oikein."""
+        orch = WorkflowOrchestrator(mode="sovereign")
+        assert orch.mode == "sovereign"
 
     def test_invalid_mode_raises(self):
         """Tuntematon moodi nostaa virheen."""

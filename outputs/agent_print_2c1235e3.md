@@ -4,7 +4,7 @@
 |---|---|
 | Tehtävä | Etsi auth_service.py-tiedostosta kaikki aikaleimalogiikat. Analysoi ne suhteessa raw/Security_Policy |
 | Malli | ollama/codellama |
-| Moodi | openclaw |
+| Moodi | omninode |
 | Tulos | ❌ EPÄONNISTUI |
 | Sandbox verifioitu | Kyllä |
 | EU AI Act Art.13 | ✅ |

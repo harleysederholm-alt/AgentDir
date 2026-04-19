@@ -237,11 +237,11 @@ def print_logo() -> None:
     """Tulostaa käynnistysbannerin + lyhyen versio-tagin stdoutiin."""
     print(banner(BANNER_VERSION, BANNER_CODENAME))
     # Lyhyt yhteenveto komennoista samalle outputille (jotta
-    # olemassa olevat testit tunnistavat 'hermes' ja 'openclaw' -merkkijonot).
+    # olemassa olevat testit tunnistavat 'sovereign' ja 'omninode' -merkkijonot).
     print(
         paint(
             f"sovereign engine {BANNER_VERSION}  ·  "
-            f"commands: run · init · hermes · openclaw · benchmark · "
+            f"commands: run · init · sovereign · omninode · benchmark · "
             f"/status · /harness · /clean · /attach · /logs",
             DIM,
             MUTED,
@@ -266,9 +266,9 @@ def _print_help() -> None:
         paint("  Workflow-komennot", BOLD, COPPER),
         kv(
             [
-                ('run "tehtävä"', "Aja orkestroitu tehtävä (--mode openclaw|hermes)"),
-                ('hermes "kysymys"', "Iteratiivinen tutkimus"),
-                ('openclaw "task"', "Syväanalyysi"),
+                ('run "tehtävä"', "Aja orkestroitu tehtävä (--mode omninode|sovereign)"),
+                ('sovereign "kysymys"', "Iteratiivinen tutkimus"),
+                ('omninode "task"', "Syväanalyysi"),
                 ("benchmark", "Suorituskykytestit (inference latency, tok/s)"),
                 ("init [--path]", "Alusta AgentDir-rakenne kansioon"),
                 ("print [--task-id]", "Näytä Agent Print -raportti"),
@@ -303,26 +303,26 @@ def _get_llm_and_rag():
     return llm, rag, cfg
 
 
-def _run_hermes(query: str) -> None:
+def _run_sovereign(query: str) -> None:
     import asyncio
 
-    _eprint(paint("[hermes] iteratiivinen tutkimus käynnistyy", COPPER, BOLD))
+    _eprint(paint("[sovereign] iteratiivinen tutkimus käynnistyy", COPPER, BOLD))
     try:
         llm, rag, _ = _get_llm_and_rag()
-        from workflows.hermes import HermesWorkflow
+        from workflows.sovereign_iterative import SovereignIterativeWorkflow
 
-        wf = HermesWorkflow(llm, rag)
+        wf = SovereignIterativeWorkflow(llm, rag)
         started = time.monotonic()
         result = asyncio.run(wf.run(query, max_iterations=3))
         _STATE.inference_ms = int((time.monotonic() - started) * 1000)
         _STATE.achii = "AWAKE"
         if _JSON:
-            _emit({"command": "hermes", "query": query, "result": result})
+            _emit({"command": "sovereign", "query": query, "result": result})
         else:
-            print(rule("hermes · tulos"))
+            print(rule("sovereign · tulos"))
             print(result)
     except Exception as exc:
-        _eprint(paint(f"[hermes] virhe: {exc}", ERR_RED, BOLD))
+        _eprint(paint(f"[sovereign] virhe: {exc}", ERR_RED, BOLD))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -428,26 +428,26 @@ def play_origin_story(fast: bool = False, story_path: Path | None = None) -> int
     return total
 
 
-def _run_openclaw(task: str) -> None:
+def _run_omninode(task: str) -> None:
     import asyncio
 
-    _eprint(paint("[openclaw] monivaiheinen syväanalyysi käynnistyy", COPPER, BOLD))
+    _eprint(paint("[omninode] monivaiheinen syväanalyysi käynnistyy", COPPER, BOLD))
     try:
         llm, rag, _ = _get_llm_and_rag()
-        from workflows.openclaw import OpenClawWorkflow
+        from workflows.omninode_deep import OmniNodeDeepWorkflow
 
-        wf = OpenClawWorkflow(llm, rag)
+        wf = OmniNodeDeepWorkflow(llm, rag)
         started = time.monotonic()
         result = asyncio.run(wf.run(task))
         _STATE.inference_ms = int((time.monotonic() - started) * 1000)
         _STATE.achii = "AWAKE"
         if _JSON:
-            _emit({"command": "openclaw", "task": task, "result": result})
+            _emit({"command": "omninode", "task": task, "result": result})
         else:
-            print(rule("openclaw · tulos"))
+            print(rule("omninode · tulos"))
             print(result)
     except Exception as exc:
-        _eprint(paint(f"[openclaw] virhe: {exc}", ERR_RED, BOLD))
+        _eprint(paint(f"[omninode] virhe: {exc}", ERR_RED, BOLD))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -741,20 +741,20 @@ def repl_mode(parser: argparse.ArgumentParser) -> None:
                     )
                 continue
 
-            if user_input.lower().startswith("hermes "):
-                query = user_input[7:].strip().strip('"')
+            if user_input.lower().startswith("sovereign "):
+                query = user_input[10:].strip().strip('"')
                 if query:
-                    _run_hermes(query)
+                    _run_sovereign(query)
                 else:
-                    _eprint(paint('käyttö: hermes "tutkimuskysymys"', DIM, MUTED))
+                    _eprint(paint('käyttö: sovereign "tutkimuskysymys"', DIM, MUTED))
                 continue
 
-            if user_input.lower().startswith("openclaw "):
+            if user_input.lower().startswith("omninode "):
                 task = user_input[9:].strip().strip('"')
                 if task:
-                    _run_openclaw(task)
+                    _run_omninode(task)
                 else:
-                    _eprint(paint('käyttö: openclaw "analyysitehtävä"', DIM, MUTED))
+                    _eprint(paint('käyttö: omninode "analyysitehtävä"', DIM, MUTED))
                 continue
 
             # Delegoi loput argparse-parserille (run, init, benchmark, print…)
@@ -799,9 +799,9 @@ def _build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("task", help="tehtävän kuvaus")
     run_p.add_argument(
         "--mode",
-        choices=["openclaw", "hermes"],
-        default="openclaw",
-        help="workflow-moodi (oletus: openclaw)",
+        choices=["omninode", "sovereign"],
+        default="omninode",
+        help="workflow-moodi (oletus: omninode)",
     )
     run_p.add_argument(
         "--model",

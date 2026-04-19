@@ -40,7 +40,15 @@ export default function App() {
     let reconnectTimer;
 
     const connect = () => {
-      socket = new WebSocket("ws://127.0.0.1:8081/ws/achii");
+      // Käytä aina samaa IP:tä mistä sivu ladataan tai tallennettua tunnelia
+      // Jos Vercelissä, käytetään wss:// - jos lokaaliverkossa, ws://
+      const customWsUrl = localStorage.getItem('achii_ws_url');
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+      const wsUrl = customWsUrl || `${protocol}//${host}:8081/ws/achii`;
+      
+      console.log("Achii yhdistää:", wsUrl);
+      socket = new WebSocket(wsUrl);
       socket.onopen = () => { setWsConnected(true); };
       socket.onmessage = (event) => {
         try {
