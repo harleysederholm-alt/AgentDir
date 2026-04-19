@@ -1,8 +1,8 @@
 <div align="center">
   <img src="docs/achii_wrench_lightbulb.png" alt="Achii — a rusted wrench cradling a warm filament bulb. The Achii Harness mark." width="320"/>
 
-  <h1>AgentDir × Achii — Sovereign AI Engine v4.2</h1>
-  <h3><em>“The Rusty Awakening”</em></h3>
+  <h1>AgentDir × Achii — Sovereign AI Engine</h1>
+  <h3><em>"The Rusty Awakening"</em></h3>
 
   <p><em>The model is a commodity. The harness is the product.</em></p>
 
