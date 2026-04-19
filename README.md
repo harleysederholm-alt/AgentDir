@@ -1,7 +1,7 @@
 <div align="center">
   <img src="desktop/public/achii_head_clean.png" alt="Achii — Sovereign AI Avatar" width="200"/>
 
-  <h1>🦄 AgentDir × Achii: Sovereign AI Engine v4.2</h1>
+  <h1>🦄 AgentDir × Achii: Sovereign AI Engine</h1>
   <h3><em>"The Rusty Awakening"</em></h3>
 
   <p><strong>The world's first 100% local, autonomous AI ecosystem with a soul.</strong><br>
