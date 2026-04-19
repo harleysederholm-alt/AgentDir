@@ -118,7 +118,7 @@ export default function App() {
       </header>
 
       {/* ═══ NAVIGATION TABS ═══ */}
-      <nav className="flex items-center gap-1 px-6 py-1 bg-deep-black border-b border-copper/10 z-20 shrink-0">
+      <nav className="hidden md:flex items-center gap-1 px-6 py-1 bg-deep-black border-b border-copper/10 z-20 shrink-0">
         {[
           { id: 'dashboard', label: 'Dashboard', icon: Activity },
           { id: 'maas-db', label: 'MaaS-DB Graph', icon: FileText },
@@ -144,7 +144,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden z-10">
 
         {/* ─── VASEN: Achii Persoona + OmniNode ─── */}
-        <aside className="w-[280px] flex flex-col gap-3 p-4 shrink-0 overflow-y-auto">
+        <aside className="hidden lg:flex w-[280px] flex-col gap-3 p-4 shrink-0 overflow-y-auto">
 
           {/* Achii Avatar */}
           <div className="panel-theater p-4 flex flex-col items-center spotlight relative overflow-hidden">
@@ -241,7 +241,7 @@ export default function App() {
         </aside>
 
         {/* ─── KESKI: Dashboard / MaaS-DB / Logs ─── */}
-        <main className="flex-1 flex flex-col overflow-hidden border-l border-r border-copper/10">
+        <main className="hidden lg:flex flex-1 flex-col overflow-hidden border-l border-r border-copper/10">
           
           {/* Dashboard-näkymä */}
           {activeTab === 'dashboard' && (
@@ -411,7 +411,7 @@ export default function App() {
         </main>
 
         {/* ─── OIKEA: The Causal Terminal + Achii Chat ─── */}
-        <aside className="w-[340px] flex flex-col shrink-0">
+        <aside className="w-full lg:w-[340px] flex flex-col shrink-0">
           
           {/* Causal Scratchpad */}
           <div className="p-4 flex-1 overflow-y-auto">
@@ -463,7 +463,7 @@ export default function App() {
           </div>
 
           {/* ─── Chat / Komentorivi ─── */}
-          <div className="h-[220px] flex flex-col border-t border-copper/15 bg-deep-black">
+          <div className="flex-1 lg:h-[220px] lg:flex-none flex flex-col border-t border-copper/15 bg-deep-black">
             <div className="flex-1 overflow-y-auto p-3 space-y-2 font-mono text-[11px]">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`break-words leading-relaxed ${
@@ -500,11 +500,11 @@ export default function App() {
       </div>
 
       {/* ═══ FOOTER STATUS ═══ */}
-      <footer className="status-bar flex items-center justify-between px-6 py-1.5 z-20 text-[9px] font-mono shrink-0">
-        <span className="text-steel/40">SOVEREIGN ENGINE v4.2 · THE RUSTY AWAKENING · ZERO CLOUD EGRESS</span>
-        <div className="flex items-center gap-3">
-          <span className="text-steel/40">Nodes: <span className="text-copper">1 active</span></span>
-          <span className="text-steel/40">RAG: <span className="text-amber">synced</span></span>
+      <footer className="status-bar flex items-center justify-between px-3 md:px-6 py-1.5 z-20 text-[9px] font-mono shrink-0">
+        <span className="text-steel/40 truncate mr-2">SOVEREIGN ENGINE v4.2 · ZERO CLOUD EGRESS</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden md:inline text-steel/40">Nodes: <span className="text-copper">1 active</span></span>
+          <span className="hidden md:inline text-steel/40">RAG: <span className="text-amber">synced</span></span>
           <span className="text-steel/40 cursor-pointer hover:text-dirty-white transition-colors"
              onClick={() => {
                const defaultUrl = localStorage.getItem('achii_ws_url') || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname}:8081/ws/achii`;
