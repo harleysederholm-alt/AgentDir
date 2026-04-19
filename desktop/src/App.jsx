@@ -505,7 +505,17 @@ export default function App() {
         <div className="flex items-center gap-3">
           <span className="text-steel/40">Nodes: <span className="text-copper">1 active</span></span>
           <span className="text-steel/40">RAG: <span className="text-amber">synced</span></span>
-          <span className="text-steel/40">
+          <span className="text-steel/40 cursor-pointer hover:text-dirty-white transition-colors"
+             onClick={() => {
+               const defaultUrl = localStorage.getItem('achii_ws_url') || `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname}:8081/ws/achii`;
+               const newUrl = prompt("🌐 OmniNode Tunnel - Määritä Achiin WebSocket URL (Lokaali IP tai pilven ngrok URL):", defaultUrl);
+               if (newUrl) {
+                 localStorage.setItem('achii_ws_url', newUrl);
+                 window.location.reload();
+               }
+             }}
+             title="Klikkaa muuttaaksesi tunnelin API-osoitetta"
+          >
             WS: <span className={wsConnected ? 'text-amber' : 'text-red-500'}>{wsConnected ? 'connected' : 'waiting'}</span>
           </span>
         </div>
