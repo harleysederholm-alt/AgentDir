@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/achii-wrench.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
       { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
       "Harness Engineering suurille kielimalleille: lokaali, deterministinen, ei-vuotava. Rakenna valjaat. Lopeta yappaus.",
     type: "website",
     locale: "fi_FI",
-    images: [{ url: "/achii-wrench.png", width: 512, height: 512 }],
+    images: [{ url: "/favicon.png", width: 512, height: 512 }],
   },
   robots: { index: true, follow: true },
 };
@@ -77,7 +77,7 @@ export default function RootLayout({
       <head>
         {/* Explicit favicon link — some Vercel/Next combinations skip the
             metadata.icons entry on first paint, so we back it up inline. */}
-        <link rel="icon" type="image/png" href="/achii-wrench.png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="shortcut icon" href="/favicon.ico" />
         {/* Preload the theater-stage background so it renders on first paint
             instead of flashing a flat #0F0F0F panel. */}

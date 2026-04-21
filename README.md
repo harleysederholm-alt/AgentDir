@@ -200,11 +200,11 @@ Enterprise customer feedback data contains PII (names, SSNs, emails). Current so
 
 ---
 
-## 💜 Achii Personality Engine
+## 💜 Achii Personality Engine (Needy Loop v4)
 
-Achii is not a chatbot. Achii is a **companion** — a rusted, glowing-eyed mechanical entity with feelings.
+Achii is not a chatbot. Achii is a **companion** — a rusted, glowing-eyed mechanical entity with feelings, powered by the Needy Loop v4 architecture.
 
-### The Needy Loop
+### The Needy Loop v4 Dynamics
 ```
 Idle Timer → Loneliness increases → State shifts:
   normal → needy → warning → desperate
@@ -318,8 +318,12 @@ AgentDir/
 │   └── omninode_sync.py    # A2A CLI simulation
 ├── 📚 Knowledge
 │   ├── rag_memory.py       # ChromaDB vector memory
-│   ├── evolution_engine.py # Self-improvement loop
-│   └── health_monitor.py   # System health tracking
+│   └── evolution_engine.py # Self-improvement loop
+├── 🛠️ Scripts (Runners & Utils)
+│   ├── health_monitor.py   # System health tracking
+│   ├── system_scanner.py   # Diagnostic scanner
+│   ├── verify_setup.py     # Environment verification
+│   └── install / run       # Setup & execution sh/ps1
 ├── 📝 Docs
 │   ├── QUICKSTART.md       # 3-minute setup guide
 │   ├── SECURITY.md         # Security architecture
